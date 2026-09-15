@@ -17,8 +17,8 @@ export async function POST(request: Request) {
     if (!user || user.deletedAt) return jsonError("E-mail ou mot de passe incorrect", 401);
     const ok = await verifyPassword(body.password, user.passwordHash);
     if (!ok) return jsonError("E-mail ou mot de passe incorrect", 401);
-    await createSession(user.id);
-    return jsonOk({ id: user.id, email: user.email, displayName: user.displayName });
+    const token = await createSession(user.id);
+    return jsonOk({ token, id: user.id, email: user.email, displayName: user.displayName });
   } catch (error) {
     if (error instanceof z.ZodError) return jsonError("Données invalides");
     return handleRouteError(error);

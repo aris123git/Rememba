@@ -21,6 +21,8 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       headers: {
         "Content-Type": contentType,
         "Cache-Control": "private, max-age=3600",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Authorization,Content-Type",
       },
     });
   } catch (error) {

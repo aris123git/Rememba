@@ -30,8 +30,8 @@ export async function POST(request: Request) {
         },
       },
     });
-    await createSession(user.id);
-    return jsonOk({ id: user.id, email: user.email, displayName: user.displayName }, 201);
+    const token = await createSession(user.id);
+    return jsonOk({ token, id: user.id, email: user.email, displayName: user.displayName }, 201);
   } catch (error) {
     if (error instanceof z.ZodError) return jsonError("Données invalides");
     return handleRouteError(error);

@@ -1,6 +1,6 @@
 import { jwtVerify, SignJWT } from "jose";
 import bcrypt from "bcryptjs";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { jwtSecret, SESSION_COOKIE } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
@@ -13,12 +13,16 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return bcrypt.compare(password, hash);
 }
 
-export async function createSession(userId: string): Promise<void> {
-  const token = await new SignJWT({ sub: userId })
+export async function issueToken(userId: string): Promise<string> {
+  return new SignJWT({ sub: userId })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("30d")
     .sign(jwtSecret());
+}
+
+export async function createSession(userId: string): Promise<string> {
+  const token = await issueToken(userId);
   const jar = await cookies();
   jar.set(SESSION_COOKIE, token, {
     httpOnly: true,
@@ -27,6 +31,7 @@ export async function createSession(userId: string): Promise<void> {
     secure: process.env.NODE_ENV === "production",
     maxAge: 60 * 60 * 24 * 30,
   });
+  return token;
 }
 
 export async function clearSession(): Promise<void> {
@@ -34,9 +39,18 @@ export async function clearSession(): Promise<void> {
   jar.delete(SESSION_COOKIE);
 }
 
-export async function getSessionUserId(): Promise<string | null> {
+async function readPresentedToken(): Promise<string | null> {
+  const headerStore = await headers();
+  const authorization = headerStore.get("authorization");
+  if (authorization?.toLowerCase().startsWith("bearer ")) {
+    return authorization.slice(7).trim();
+  }
   const jar = await cookies();
-  const token = jar.get(SESSION_COOKIE)?.value;
+  return jar.get(SESSION_COOKIE)?.value ?? null;
+}
+
+export async function getSessionUserId(): Promise<string | null> {
+  const token = await readPresentedToken();
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, jwtSecret());
@@ -64,8 +78,7 @@ export async function requireUser() {
 export async function requireApiUser() {
   const user = await getCurrentUser();
   if (!user) {
-    const error = new Error("UNAUTHENTICATED");
-    throw error;
+    throw new Error("UNAUTHENTICATED");
   }
   return user;
 }

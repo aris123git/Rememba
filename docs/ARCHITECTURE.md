@@ -36,9 +36,9 @@ Le cœur différenciant (événements collectifs, agent conversationnel, génér
 
 | Couche | Choix V1 | Pourquoi | Évolution |
 | --- | --- | --- | --- |
-| Client | Next.js 15 App Router, TypeScript, Tailwind | PWA testable maintenant, UI réelle, un seul langage avec l’API | Expo / React Native plus tard, mêmes API |
-| API / BFF | Route Handlers Next.js | Un process de moins en V1, auth cookie httpOnly simple | Extraire NestJS/Fastify si le BFF grossit (V3+) |
-| Auth | Session JWT httpOnly (`jose` + `bcryptjs`) | Pas de SaaS externe, contrôle total | OAuth (Apple/Google) en V2+ |
+| Client | **Flutter** (Android V1, iOS même code) + PWA Next.js (API + console) | Un seul métier. Desktop/Web Flutter plus tard |
+| API | Next.js Route Handlers, **JWT Bearer + cookie** | Fastify dédié si besoin |
+| Auth | JWT 30j (`jose` + `bcryptjs`) | OAuth (Apple/Google) |
 | BDD | SQLite + Prisma | Zéro ops, schéma portable | PostgreSQL (changer `provider`, pgvector pour ANN) |
 | Fichiers | Disque local via `StorageProvider` | Abstrait dès V1 | S3 / MinIO sans changer les services |
 | Jobs | File SQL `Job` + worker Node | Asynchrone réel sans Redis | BullMQ + Redis dès ~1k photos / multi-instances |
@@ -52,35 +52,22 @@ Non retenus en V1 : Redis, Kafka, Kubernetes, entraînement de modèle, LLM, FFm
 ## 4. Architecture logicielle
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│  Client PWA (Next.js)                                    │
-│  « Vos souvenirs » · Galerie · Personnes · Événements    │
-└────────────────────────────┬─────────────────────────────┘
-                             │ HTTPS, cookie de session
-┌────────────────────────────▼─────────────────────────────┐
-│  API applicative                                         │
-│  Auth · Photos · People · Events · Suggestions · Privacy │
-│                                                          │
-│  AI Orchestrator  (TypeScript, règles métier)            │
-│    detectAndEmbed → clusterFaces → suggestIdentity       │
-│    suggestTimeBasedEvents                                │
-└──────────┬─────────────────────────────┬─────────────────┘
-           │                             │
-┌──────────▼──────────┐       ┌──────────▼──────────┐
-│ FaceRecognitionSvc  │       │ Persistence         │
-│ (HTTP interne)      │       │ Prisma / SQLite     │
-│ detectFaces         │       │ StorageProvider     │
-│ generateEmbedding   │       │ JobQueue            │
-│ compareFaces        │       └─────────────────────┘
-│ clusterFaces*       │
-│ suggestIdentity*    │       * clustering / suggestions
-└──────────┬──────────┘         exécutés dans l’orchestrateur
-           │                    (le service IA reste un moteur CV)
-┌──────────▼──────────┐
-│ OpenCvSFaceProvider │  ← remplaçable par ProprietaryProvider
-│ YuNet + SFace ONNX  │
-└─────────────────────┘
+┌─────────────── Flutter ───────────────┐
+│ Android (V1) · iOS · plus tard desktop│
+│ Aucun modèle IA dans le binaire       │
+└────────────────┬──────────────────────┘
+                 │ HTTPS, JWT Bearer
+┌────────────────▼──────────────────────┐
+│  API applicative (aussi PWA Next.js)  │
+│  Auth · Photos · People · Events      │
+│  AI Orchestrator                      │
+└──────────┬───────────────┬────────────┘
+           │               │
+     FaceRecognition   Persistence
+     Service (Python)  Prisma + fichiers
 ```
+
+Le provider OpenCV YuNet + SFace reste derrière `FaceRecognitionService` (HTTP interne). Remplaçable par un modèle propriétaire sans toucher Flutter.
 
 Règle : **aucun écran, aucune route métier n’importe un modèle ONNX**. Ils parlent à l’orchestrateur. L’orchestrateur parle à `FaceRecognitionService`. Le provider est un détail de déploiement.
 

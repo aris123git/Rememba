@@ -24,7 +24,20 @@ out/
 dist/
 coverage/
 
-# Models (downloaded at first run)
+# Flutter
+apps/mobile/.dart_tool/
+apps/mobile/.flutter-plugins
+apps/mobile/.flutter-plugins-dependencies
+apps/mobile/build/
+**/*.iml
+**/local.properties
+
+# Signed/built packages (copied to artifacts, not the repo)
+*.apk
+*.aab
+*.ipa
+
+# Modèles OpenCV (téléchargés au setup)
 apps/ai-service/models/*.onnx
 
 # OS / IDE
