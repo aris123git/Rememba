@@ -67,7 +67,7 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Rememba importe vos photos pour créer des souvenirs. L’analyse des visages n’a lieu qu’avec votre consentement.</string>
+	<string>Rememba affiche vos photos déjà présentes sur l’appareil. Aucun compte n’est requis.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Rememba peut enregistrer un souvenir exporté dans votre photothèque. Export : TODO V5.</string>
 	<key>NSAppTransportSecurity</key>

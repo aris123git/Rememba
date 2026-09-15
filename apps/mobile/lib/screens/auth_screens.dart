@@ -35,13 +35,14 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final session = widget.session;
     return Scaffold(
+      appBar: AppBar(title: const Text('Compte optionnel')),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
             Text('Rememba', style: serifStyle(size: 36)),
             const SizedBox(height: 8),
-            const Text('V1 · Android / iOS · le métier reste sur le serveur', style: TextStyle(color: remembaMuted)),
+            const Text('Optionnel. La galerie marche déjà sans compte.', style: TextStyle(color: remembaMuted)),
             const SizedBox(height: 32),
             Text('Connexion', style: serifStyle(size: 28)),
             const SizedBox(height: 16),
@@ -67,9 +68,15 @@ class _LoginScreenState extends State<LoginScreen> {
               onPressed: () async {
                 await session.setBaseUrl(server.text);
                 await session.signIn(email.text.trim(), password.text);
+                if (session.isSignedIn && context.mounted) Navigator.pop(context);
               },
             ),
-            TextButton(onPressed: widget.onRegister, child: const Text('Créer un compte', style: TextStyle(color: remembaGold))),
+            TextButton(
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterScreen(session: session, onLogin: () => Navigator.pop(context))));
+              },
+              child: const Text('Créer un compte', style: TextStyle(color: remembaGold)),
+            ),
           ],
         ),
       ),
@@ -112,6 +119,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     final session = widget.session;
     return Scaffold(
+      appBar: AppBar(title: const Text('Compte optionnel')),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(24),
@@ -146,6 +154,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   password: password.text,
                   aiPhotoAnalysis: consent,
                 );
+                if (session.isSignedIn && context.mounted) {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                }
               },
             ),
             TextButton(onPressed: widget.onLogin, child: const Text('J’ai déjà un compte', style: TextStyle(color: remembaGold))),

@@ -1,8 +1,10 @@
 # Rememba
 
-Assistant intelligent de souvenirs.
+Galerie photo d’abord. Le compte, le cloud et l’IA viendront **ensuite**, si on le souhaite.
 
-**V1–V7** : client **Flutter Android** (iOS = le même code) + **backend API commun**. Le moteur IA n’est jamais dans l’APK. Desktop / web plus tard, **même compte, mêmes données**.
+**Aujourd’hui** : ouvrir l’app Android → voir les photos déjà sur le téléphone. **Pas de création de compte.**
+
+Le backend (souvenirs IA, personnes, événements, sync) reste dans le dépôt pour plus tard. Flutter iOS = le même code. Le moteur IA n’est jamais dans l’APK.
 
 ```
 Android / iOS / (plus tard Windows · macOS · Linux · Web)
@@ -42,7 +44,9 @@ Installateur (APK, clés debug, pour tester) :
 
 - [releases/rememba-android.apk](releases/rememba-android.apk)
 
-Téléphone physique : autoriser les sources inconnues, installer l’APK, lancer le backend, puis dans l’app URL `http://IP_LAN:3000`. Émulateur : `http://10.0.2.2:3000`.
+Téléphone : autoriser les sources inconnues, installer l’APK, autoriser l’accès aux photos. Aucun serveur n’est requis pour la galerie.
+
+Compte / IA (plus tard) : Réglages → Connecter un compte, backend `http://IP_LAN:3000`.
 
 Pour recompiler :
 

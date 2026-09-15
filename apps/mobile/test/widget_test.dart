@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rememba/ai/vision_backend.dart';
 
 void main() {
-  test('cloud vision is the V1 default', () {
+  test('cloud vision is optional and never bundled in the APK', () {
     expect(const CloudVisionBackend().id, 'cloud');
   });
 }

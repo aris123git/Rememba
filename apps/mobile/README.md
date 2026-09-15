@@ -1,7 +1,8 @@
 # Rememba — client Flutter
 
-Plateformes générées : **Android, iOS, Web, Windows, macOS, Linux**.  
-V1 : on compile **Android**. Le métier et l’IA restent sur le backend.
+Plateformes générées : **Android, iOS, Web, Windows, macOS, Linux**.
+
+Pour un début : **galerie locale**, sans compte. L’IA et le backend restent optionnels (Réglages).
 
 Aucun modèle ONNX/TFLite n’est dans cet APK. Voir `lib/ai/vision_backend.dart`.
 

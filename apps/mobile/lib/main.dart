@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:rememba/screens/auth_screens.dart';
-import 'package:rememba/screens/shell.dart';
+import 'package:rememba/screens/local_gallery_screen.dart';
 import 'package:rememba/state/session.dart';
 import 'package:rememba/theme.dart';
 
@@ -18,7 +17,6 @@ class RemembaApp extends StatefulWidget {
 
 class _RemembaAppState extends State<RemembaApp> {
   final session = SessionController();
-  bool showRegister = false;
 
   @override
   void initState() {
@@ -41,11 +39,7 @@ class _RemembaAppState extends State<RemembaApp> {
       theme: remembaTheme(),
       home: !session.ready
           ? const Scaffold(body: Center(child: CircularProgressIndicator(color: remembaGold)))
-          : session.isSignedIn
-              ? ShellScreen(session: session)
-              : showRegister
-                  ? RegisterScreen(session: session, onLogin: () => setState(() => showRegister = false))
-                  : LoginScreen(session: session, onRegister: () => setState(() => showRegister = true)),
+          : LocalGalleryHome(session: session),
     );
   }
 }
