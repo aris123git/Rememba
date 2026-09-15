@@ -50,16 +50,18 @@ export function AppShell({
             );
           })}
         </nav>
-        <div className="mt-auto pt-8 text-sm">
-          <p className="text-[var(--muted)] truncate">{displayName}</p>
-          <div className="mt-3 flex gap-3">
-            <Link href="/app/settings" className="text-[var(--gold)] hover:underline">
-              Réglages
-            </Link>
-            <button type="button" onClick={logout} className="text-[var(--muted)] hover:text-[var(--paper)]">
-              Sortir
-            </button>
-          </div>
+        <div className="mt-auto space-y-2 pt-8 text-sm">
+          <p className="truncate text-[var(--muted)]">{displayName}</p>
+          <Link href="/app/settings" className="block text-[var(--gold)] hover:underline">
+            Réglages
+          </Link>
+          <button
+            type="button"
+            onClick={logout}
+            className="block text-[var(--muted)] hover:text-[var(--paper)]"
+          >
+            Déconnexion
+          </button>
         </div>
       </aside>
       <div className="flex-1 pb-24 md:pb-0">

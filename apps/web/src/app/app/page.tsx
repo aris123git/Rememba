@@ -18,7 +18,16 @@ export default async function HomePage() {
       where: { ownerId: user.id, status: "CONFIRMED" },
       orderBy: { createdAt: "desc" },
       take: 4,
-      include: { photos: { take: 1, include: { photo: { select: { id: true, deletedAt: true } } } } },
+      include: {
+        photos: {
+          where: { photo: { deletedAt: null } },
+          take: 1,
+          include: { photo: { select: { id: true } } },
+        },
+        _count: {
+          select: { photos: { where: { photo: { deletedAt: null } } } },
+        },
+      },
     }),
     prisma.person.findMany({
       where: { ownerId: user.id },
@@ -108,7 +117,7 @@ export default async function HomePage() {
                     className="flex items-center gap-3 rounded-2xl border border-[var(--line)] bg-[var(--ink-soft)] p-3"
                   >
                     <div className="h-14 w-14 overflow-hidden rounded-xl bg-black/30">
-                      {event.photos[0] && !event.photos[0].photo.deletedAt ? (
+                      {event.photos[0] ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={`/api/photos/${event.photos[0].photo.id}/file?variant=thumb`}
@@ -120,7 +129,7 @@ export default async function HomePage() {
                     <div>
                       <p className="font-medium">{event.name}</p>
                       <p className="text-sm text-[var(--muted)]">
-                        {event.photos.filter((p) => !p.photo.deletedAt).length} photo(s)
+                        {event._count.photos} photo{event._count.photos > 1 ? "s" : ""}
                       </p>
                     </div>
                   </Link>
