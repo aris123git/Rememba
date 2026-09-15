@@ -127,13 +127,15 @@ Aucun entraînement en V1. Les embeddings stockent `modelId` pour invalidation l
 ## 7. Arborescence
 
 ```
-apps/web/                 # PWA + API + worker + Prisma
-apps/ai-service/          # FaceRecognitionService (FastAPI)
-docs/                     # Architecture, périmètre V1, versions futures
-scripts/                  # Lancement local
+apps/mobile/              # Flutter : Android (V1 APK), iOS, plus tard desktop/web
+apps/web/                 # API commune + PWA de secours + worker + Prisma
+apps/ai-service/          # FaceRecognitionService (FastAPI) — jamais dans l’APK
+docs/                     # Architecture, multiplateforme, périmètre V1
+scripts/                  # setup, build-apk
 ```
 
-Détail web : `src/app` (UI), `src/app/api` (HTTP), `src/server` (domaine), `src/lib` (auth, db, storage, jobs, ai client).
+Détail mobile : `lib/screens`, `lib/api`, `lib/ai/vision_backend.dart` (cloud V1, on-device TODO).  
+Détail web : `src/app` (UI PWA), `src/app/api` (HTTP), `src/server` (domaine), `src/lib` (auth, db, storage, jobs, ai client).
 
 ## 8. Confidentialité dès la V1
 
