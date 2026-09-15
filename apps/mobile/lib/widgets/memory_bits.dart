@@ -16,21 +16,22 @@ void openPhotos(BuildContext context, List<AssetEntity> assets, {int index = 0})
 }
 
 class EventCover extends StatelessWidget {
-  const EventCover({super.key, required this.library, required this.event, this.height = 220});
+  const EventCover({super.key, required this.library, required this.event, this.height});
   final MemoryLibrary library;
   final MemoryEvent event;
-  final double height;
+  final double? height;
 
   @override
   Widget build(BuildContext context) {
     final asset = library.assetFor(event.photoIds.first);
-    return SizedBox(
-      height: height,
-      width: double.infinity,
+    final child = ClipRRect(
+      borderRadius: BorderRadius.circular(8),
       child: asset == null
           ? const ColoredBox(color: remembaInkSoft)
-          : AssetThumb(asset: asset, size: 800, radius: 28),
+          : AssetThumb(asset: asset, size: 800, radius: 8),
     );
+    if (height == null) return child;
+    return SizedBox(height: height, width: double.infinity, child: child);
   }
 }
 
@@ -51,7 +52,7 @@ class EventPhotoStrip extends StatelessWidget {
         itemBuilder: (context, i) {
           return GestureDetector(
             onTap: () => openPhotos(context, assets, index: i),
-            child: SizedBox(width: 86, child: AssetThumb(asset: assets[i], radius: 20)),
+            child: SizedBox(width: 86, child: AssetThumb(asset: assets[i], radius: 8)),
           );
         },
       ),
@@ -69,9 +70,9 @@ class EventMeta extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('${kindEmoji(event.kind)}  ${kindLabel(event.kind).toUpperCase()}', style: kickerStyle()),
-        const SizedBox(height: 8),
-        Text(event.title, style: serifStyle(size: large ? 28 : 22)),
+        Text(kindLabel(event.kind), style: kickerStyle()),
+        const SizedBox(height: 4),
+        Text(event.title, style: serifStyle(size: large ? 22 : 16)),
         const SizedBox(height: 6),
         Text(
           '${formatDay(event.startsAt)}  ·  ${event.photoCount} photos',
@@ -94,13 +95,12 @@ class SoftChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 220),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(999),
-          color: selected ? remembaAccent.withValues(alpha: 0.28) : remembaGlass,
-          border: Border.all(color: selected ? remembaAccent : Colors.white.withValues(alpha: 0.08)),
+          borderRadius: BorderRadius.circular(8),
+          color: selected ? const Color(0xFFD2E3FC) : remembaGlass,
         ),
-        child: Text(label, style: TextStyle(color: selected ? remembaPaper : remembaMuted, fontWeight: FontWeight.w500)),
+        child: Text(label, style: TextStyle(color: selected ? remembaAccent : remembaInk, fontWeight: FontWeight.w500, fontSize: 13)),
       ),
     );
   }

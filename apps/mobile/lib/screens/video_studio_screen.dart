@@ -81,12 +81,12 @@ class _VideoStudioScreenState extends State<VideoStudioScreen> {
       _ => const Color(0x22000000),
     };
     return Scaffold(
-      appBar: AppBar(title: const Text('Souvenir filmé')),
+      appBar: AppBar(title: const Text('Film')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(32),
+            borderRadius: BorderRadius.circular(8),
             child: AspectRatio(
               aspectRatio: 9 / 12,
               child: Stack(
@@ -112,9 +112,9 @@ class _VideoStudioScreenState extends State<VideoStudioScreen> {
             ),
           ),
           const SizedBox(height: 22),
-          Text(event.title.toUpperCase(), style: kickerStyle()),
+          Text(event.title, style: kickerStyle()),
           const SizedBox(height: 8),
-          Text(formatClock(seconds), style: serifStyle(size: 40)),
+          Text(formatClock(seconds), style: serifStyle(size: 28)),
           if (ready)
             const Padding(
               padding: EdgeInsets.only(top: 8),
@@ -161,7 +161,7 @@ class _VideoStudioScreenState extends State<VideoStudioScreen> {
               );
               if (choice != null) setState(() => music = choice);
             },
-            child: Text(music == null ? '🎵  Choisir une musique' : '🎵  $music', style: serifStyle(size: 20)),
+            child: Text(music == null ? 'Choisir une musique' : music!, style: serifStyle(size: 16)),
           ),
           const SizedBox(height: 22),
           Text('Photos', style: const TextStyle(color: remembaMuted)),
@@ -186,7 +186,7 @@ class _VideoStudioScreenState extends State<VideoStudioScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 18),
                 shape: const StadiumBorder(),
               ),
-              child: Text(generating ? 'Composition…' : '✦  Générer mon souvenir'),
+              child: Text(generating ? 'Composition…' : 'Générer le film'),
             ),
           ),
         ],

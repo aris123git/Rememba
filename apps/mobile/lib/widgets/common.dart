@@ -84,7 +84,7 @@ class GoldButton extends StatelessWidget {
       onPressed: enabled ? onPressed : null,
       style: FilledButton.styleFrom(
         backgroundColor: remembaGold,
-        foregroundColor: remembaInk,
+        foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
         shape: const StadiumBorder(),
       ),

@@ -5,7 +5,6 @@ import 'package:rememba/local/memory_model.dart';
 import 'package:rememba/screens/video_studio_screen.dart';
 import 'package:rememba/theme.dart';
 import 'package:rememba/widgets/asset_thumb.dart';
-import 'package:rememba/widgets/glass.dart';
 import 'package:rememba/widgets/memory_bits.dart';
 
 class EventDetailScreen extends StatefulWidget {
@@ -38,32 +37,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   Widget build(BuildContext context) {
     final assets = widget.library.assetsFor(event);
     return Scaffold(
-      appBar: AppBar(title: Text(kindLabel(event.kind))),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
-        children: [
-          EventCover(library: widget.library, event: event, height: 280),
-          const SizedBox(height: 20),
-          Text(formatDay(event.startsAt), style: kickerStyle()),
-          const SizedBox(height: 8),
-          Text(event.title, style: serifStyle(size: 32)),
-          const SizedBox(height: 8),
-          Text(
-            'L’IA a regroupé ${event.photoCount} photos proches dans le temps. Le titre reste le vôtre.',
-            style: const TextStyle(color: remembaMuted, height: 1.4),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: name,
-            decoration: const InputDecoration(labelText: 'Nommer ce souvenir'),
-            onSubmitted: (v) async {
-              await widget.library.rename(event, v);
-              setState(() => event = event.copyWith(title: v));
-            },
-          ),
-          const SizedBox(height: 16),
-          AccentButton(
-            label: '✦  Créer un souvenir filmé',
+      appBar: AppBar(
+        title: Text(event.title, overflow: TextOverflow.ellipsis),
+        actions: [
+          IconButton(
+            tooltip: 'Film',
             onPressed: assets.isEmpty
                 ? null
                 : () {
@@ -74,17 +52,51 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       ),
                     );
                   },
+            icon: const Icon(Icons.movie_outlined),
           ),
-          const SizedBox(height: 28),
-          for (var i = 0; i < assets.length; i++) ...[
-            GestureDetector(
-              onTap: () => openPhotos(context, assets, index: i),
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 14),
-                child: AspectRatio(aspectRatio: 4 / 5, child: AssetThumb(asset: assets[i], size: 900, radius: 26)),
+        ],
+      ),
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('${formatDay(event.startsAt)} · ${event.photoCount} photos', style: kickerStyle()),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: name,
+                    decoration: const InputDecoration(hintText: 'Nom de l’album'),
+                    onSubmitted: (v) async {
+                      await widget.library.rename(event, v);
+                      setState(() => event = event.copyWith(title: v));
+                    },
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
+          SliverPadding(
+            padding: EdgeInsets.zero,
+            sliver: SliverGrid(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                mainAxisSpacing: 2,
+                crossAxisSpacing: 2,
+              ),
+              delegate: SliverChildBuilderDelegate(
+                (context, i) {
+                  return GestureDetector(
+                    onTap: () => openPhotos(context, assets, index: i),
+                    child: AssetThumb(asset: assets[i], size: 320),
+                  );
+                },
+                childCount: assets.length,
+              ),
+            ),
+          ),
         ],
       ),
     );

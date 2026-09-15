@@ -47,4 +47,17 @@ void main() {
   test('short month label does not crash on mai', () {
     expect(formatShortDay(DateTime(2026, 5, 3)), '03 MAI.');
   });
+
+  test('groups photos by day newest first, like a gallery', () {
+    final items = [
+      DateTime(2026, 9, 12, 18),
+      DateTime(2026, 9, 12, 9),
+      DateTime(2026, 9, 3, 11),
+    ];
+    final sections = groupByDay(items, (d) => d);
+    expect(sections, hasLength(2));
+    expect(sections.first.day, DateTime(2026, 9, 12));
+    expect(sections.first.items, hasLength(2));
+    expect(formatGalleryDay(DateTime(2026, 9, 12), now: DateTime(2026, 9, 15)), '12 septembre');
+  });
 }

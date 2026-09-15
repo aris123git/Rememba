@@ -2,10 +2,11 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
+import 'package:rememba/local/format.dart';
 import 'package:rememba/theme.dart';
 
 class AssetThumb extends StatelessWidget {
-  const AssetThumb({super.key, required this.asset, this.size = 400, this.radius = 22});
+  const AssetThumb({super.key, required this.asset, this.size = 300, this.radius = 0});
   final AssetEntity asset;
   final int size;
   final double radius;
@@ -56,8 +57,12 @@ class _PhotoViewerState extends State<PhotoViewer> {
   Widget build(BuildContext context) {
     final taken = widget.assets[current].createDateTime;
     return Scaffold(
-      backgroundColor: remembaInk,
-      appBar: AppBar(title: Text('${current + 1} / ${widget.assets.length}')),
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Text('${current + 1} / ${widget.assets.length}', style: const TextStyle(color: Colors.white, fontSize: 16)),
+      ),
       body: Column(
         children: [
           Expanded(
@@ -80,8 +85,8 @@ class _PhotoViewerState extends State<PhotoViewer> {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
             child: Text(
-              '${taken.day.toString().padLeft(2, '0')} / ${taken.month.toString().padLeft(2, '0')} / ${taken.year}',
-              style: const TextStyle(color: remembaMuted),
+              formatDay(taken),
+              style: const TextStyle(color: Colors.white70),
             ),
           ),
         ],

@@ -16,7 +16,34 @@ const _months = [
   'décembre',
 ];
 
+DateTime dateOnly(DateTime at) => DateTime(at.year, at.month, at.day);
+
+class DaySection<T> {
+  const DaySection(this.day, this.items);
+  final DateTime day;
+  final List<T> items;
+}
+
+List<DaySection<T>> groupByDay<T>(Iterable<T> items, DateTime Function(T) dateOf) {
+  final map = <DateTime, List<T>>{};
+  for (final item in items) {
+    final day = dateOnly(dateOf(item));
+    map.putIfAbsent(day, () => []).add(item);
+  }
+  final days = map.keys.toList()..sort((a, b) => b.compareTo(a));
+  return [for (final day in days) DaySection(day, map[day]!)];
+}
+
 String formatDay(DateTime at) => '${at.day} ${_months[at.month]} ${at.year}';
+
+String formatGalleryDay(DateTime at, {DateTime? now}) {
+  final today = dateOnly(now ?? DateTime.now());
+  final day = dateOnly(at);
+  if (day == today) return 'Aujourd’hui';
+  if (day == today.subtract(const Duration(days: 1))) return 'Hier';
+  if (day.year == today.year) return '${day.day} ${_months[day.month]}';
+  return '${day.day} ${_months[day.month]} ${day.year}';
+}
 
 String formatMonthHeader(DateTime at) => '${_months[at.month].toUpperCase()} ${at.year}';
 

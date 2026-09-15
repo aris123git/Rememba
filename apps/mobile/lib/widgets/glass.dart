@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:rememba/theme.dart';
 
@@ -7,7 +5,7 @@ class GlassCard extends StatelessWidget {
   const GlassCard({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(20),
+    this.padding = const EdgeInsets.all(16),
     this.onTap,
     this.glow = false,
   });
@@ -19,25 +17,18 @@ class GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final card = ClipRRect(
-      borderRadius: BorderRadius.circular(28),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
-            color: Colors.white.withValues(alpha: glow ? 0.09 : 0.055),
-            border: Border.all(color: Colors.white.withValues(alpha: glow ? 0.18 : 0.08)),
-            boxShadow: glow
-                ? [BoxShadow(color: remembaAccent.withValues(alpha: 0.22), blurRadius: 28, offset: const Offset(0, 12))]
-                : null,
-          ),
-          child: Padding(padding: padding, child: child),
-        ),
+    final card = DecoratedBox(
+      decoration: BoxDecoration(
+        color: remembaBar,
+        borderRadius: BorderRadius.circular(12),
       ),
+      child: Padding(padding: padding, child: child),
     );
     if (onTap == null) return card;
-    return GestureDetector(onTap: onTap, child: card);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(onTap: onTap, borderRadius: BorderRadius.circular(12), child: card),
+    );
   }
 }
 
@@ -57,8 +48,8 @@ class AccentButton extends StatelessWidget {
       style: FilledButton.styleFrom(
         backgroundColor: remembaAccent,
         foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-        shape: const StadiumBorder(),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
       child: Text(label),
     );

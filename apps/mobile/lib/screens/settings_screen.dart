@@ -51,16 +51,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          Text('Pour commencer', style: serifStyle(size: 28)),
+          Text('Galerie', style: serifStyle(size: 22)),
           const SizedBox(height: 8),
           const Text(
-            'Rememba comprend votre mémoire sur l’appareil. Aucun compte n’est nécessaire pour commencer.',
+            'Vos photos restent sur le téléphone. Aucun compte n’est nécessaire.',
             style: TextStyle(color: remembaMuted),
           ),
           const SizedBox(height: 16),
           TextField(
             controller: firstName,
-            decoration: const InputDecoration(labelText: 'Prénom (optionnel, pour l’accueil)'),
+            decoration: const InputDecoration(labelText: 'Prénom (optionnel)'),
             onSubmitted: (v) => widget.library?.setDisplayName(v),
           ),
           const SizedBox(height: 8),
@@ -72,7 +72,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          Text('Compte (plus tard)', style: serifStyle(size: 22)),
+          Text('Compte', style: serifStyle(size: 16)),
           const Text(
             'Souvenirs IA, personnes, événements et sync arriveront ensuite, si vous le souhaitez.',
             style: TextStyle(color: remembaMuted),
@@ -129,7 +129,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
             const Divider(),
-            Text('Supprimer mon compte', style: serifStyle(size: 22)),
+            Text('Supprimer mon compte', style: serifStyle(size: 16)),
             TextField(
               controller: confirm,
               decoration: const InputDecoration(labelText: 'Tapez SUPPRIMER'),
