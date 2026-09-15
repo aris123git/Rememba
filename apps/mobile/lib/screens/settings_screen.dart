@@ -61,6 +61,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
               setState(() => granted = v);
             },
           ),
+          SwitchListTile(
+            value: widget.session.user?['collectiveMatching'] == true,
+            activeThumbColor: remembaGold,
+            title: const Text('Matching collectif (opt-in)'),
+            subtitle: const Text('Compare uniquement les visages « c’est moi » entre comptes consentants. Aucun partage auto.'),
+            onChanged: (v) async {
+              await widget.session.api.setConsent(v, type: 'COLLECTIVE_MATCHING');
+              await widget.session.refreshMe();
+              setState(() {});
+            },
+          ),
+          SwitchListTile(
+            value: widget.session.user?['publicDiscovery'] == true,
+            activeThumbColor: remembaGold,
+            title: const Text('Découverte d’événements publics'),
+            subtitle: const Text('Voir les événements organisateur publics. Rejoindre ≠ voir les photos.'),
+            onChanged: (v) async {
+              await widget.session.api.setConsent(v, type: 'PUBLIC_DISCOVERY');
+              await widget.session.refreshMe();
+              setState(() {});
+            },
+          ),
           const Divider(),
           Text('Supprimer mon compte', style: serifStyle(size: 22)),
           const Text('Efface photos, visages, événements et fichiers. Irréversible.', style: TextStyle(color: remembaMuted)),
@@ -86,7 +108,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             if (context.mounted) Navigator.pop(context);
           }),
           const SizedBox(height: 24),
-          const Text('Hors V1 : partage, événements collectifs, agent, vidéo, traitement 100 % local.', style: TextStyle(color: remembaMuted, fontSize: 13)),
+          const Text('V1–V7 : souvenirs, lieux, partages, agent, vidéo, mémoire, événements publics. Le modèle IA reste sur le serveur.', style: TextStyle(color: remembaMuted, fontSize: 13)),
         ],
       ),
     );

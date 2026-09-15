@@ -8,7 +8,12 @@ const links = [
   { href: "/app/gallery", label: "Galerie" },
   { href: "/app/people", label: "Personnes" },
   { href: "/app/events", label: "Événements" },
-  { href: "/app/suggestions", label: "Suggestions" },
+  { href: "/app/suggestions", label: "IA" },
+  { href: "/app/agent", label: "Agent" },
+  { href: "/app/shares", label: "Partages" },
+  { href: "/app/videos", label: "Vidéos" },
+  { href: "/app/memory", label: "Mémoire" },
+  { href: "/app/public", label: "Public" },
 ];
 
 export function AppShell({
@@ -33,7 +38,7 @@ export function AppShell({
         <Link href="/app" className="serif text-2xl tracking-tight">
           Rememba
         </Link>
-        <p className="mt-1 text-xs uppercase tracking-[0.2em] text-[var(--muted)]">V1 · souvenirs</p>
+        <p className="mt-1 text-xs uppercase tracking-[0.2em] text-[var(--muted)]">V7 · souvenirs</p>
         <nav className="mt-10 flex flex-col gap-1">
           {links.map((link) => {
             const active = pathname === link.href || (link.href !== "/app" && pathname.startsWith(link.href));
@@ -76,7 +81,7 @@ export function AppShell({
         <main className="mx-auto w-full max-w-6xl px-4 py-6 md:px-8 md:py-10">{children}</main>
       </div>
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-20 grid grid-cols-5 border-t border-[var(--line)] bg-[var(--ink)]/95 backdrop-blur">
-        {links.map((link) => {
+        {links.slice(0, 5).map((link) => {
           const active = pathname === link.href || (link.href !== "/app" && pathname.startsWith(link.href));
           return (
             <Link

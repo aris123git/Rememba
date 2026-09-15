@@ -86,6 +86,7 @@ export default async function HomePage() {
                   id: item.id,
                   type: item.type,
                   payload: JSON.parse(item.payload) as Record<string, unknown>,
+                  confidence: item.confidence,
                 }}
               />
             ))}

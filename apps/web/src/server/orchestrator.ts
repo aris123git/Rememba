@@ -1,10 +1,9 @@
-import { EVENT_GAP_MS, EVENT_MIN_PHOTOS, PERSON_MIN_PHOTOS, faceMatchThreshold } from "@/lib/config";
+import { PERSON_MIN_PHOTOS, faceMatchThreshold } from "@/lib/config";
 import { prisma } from "@/lib/prisma";
 import { getStorage } from "@/lib/storage";
 import { nearestCentroid } from "@/server/ai/cluster";
-import { groupByTimeWindows } from "@/server/ai/eventWindows";
 import { getFaceRecognitionService } from "@/server/ai/faceRecognition";
-import { clusterDedupeKey, eventDedupeKey } from "@/server/ai/keys";
+import { clusterDedupeKey } from "@/server/ai/keys";
 import { bufferToFloat32, cosineSimilarity, float32ToBuffer, meanNormalized } from "@/server/ai/vectors";
 import { enqueueJob } from "@/server/jobs/queue";
 
@@ -22,6 +21,7 @@ export async function processPhotoJob(photoId: string) {
       where: { id: photo.id },
       data: { analysisStatus: "SKIPPED", analysisError: null },
     });
+    await enqueueJob("ENRICH_LIBRARY", { userId: photo.ownerId }, photo.ownerId);
     return;
   }
 
@@ -130,6 +130,7 @@ export async function clusterUserJob(userId: string) {
 
   await mergeCloseClusters(clusters, threshold);
   await enqueueJob("GENERATE_SUGGESTIONS", { userId }, userId);
+  await enqueueJob("ENRICH_LIBRARY", { userId }, userId);
 }
 
 async function mergeCloseClusters(clusters: ClusterCache[], threshold: number) {
@@ -191,47 +192,6 @@ export async function generateSuggestionsJob(userId: string) {
           clusterId: cluster.id,
           photoCount: photoIds.length,
           samplePhotoIds: photoIds.slice(0, 6),
-        }),
-      },
-    });
-  }
-
-  const photos = await prisma.photo.findMany({
-    where: { ownerId: userId, deletedAt: null },
-    include: { eventPhotos: { include: { event: true } } },
-  });
-  const timed = photos.map((photo) => ({
-    id: photo.id,
-    at: photo.takenAt ?? photo.importedAt,
-    alreadyInEvent: photo.eventPhotos.some((link) => link.event.status === "CONFIRMED"),
-  }));
-  const windows = groupByTimeWindows(timed, EVENT_GAP_MS, EVENT_MIN_PHOTOS);
-  for (const window of windows) {
-    const dedupeKey = eventDedupeKey(window.photoIds);
-    const existing = await prisma.aIRecommendation.findUnique({
-      where: { userId_dedupeKey: { userId, dedupeKey } },
-    });
-    if (existing && existing.status !== "PENDING" && existing.status !== "SNOOZED") continue;
-    await prisma.aIRecommendation.upsert({
-      where: { userId_dedupeKey: { userId, dedupeKey } },
-      update: {
-        payload: JSON.stringify({
-          photoIds: window.photoIds,
-          startsAt: window.startsAt.toISOString(),
-          endsAt: window.endsAt.toISOString(),
-          photoCount: window.photoIds.length,
-        }),
-      },
-      create: {
-        userId,
-        type: "EVENT_CANDIDATE",
-        dedupeKey,
-        confidence: window.photoIds.length >= 12 ? "HIGH" : window.photoIds.length >= 5 ? "MEDIUM" : "LOW",
-        payload: JSON.stringify({
-          photoIds: window.photoIds,
-          startsAt: window.startsAt.toISOString(),
-          endsAt: window.endsAt.toISOString(),
-          photoCount: window.photoIds.length,
         }),
       },
     });

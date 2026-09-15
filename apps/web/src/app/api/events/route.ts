@@ -10,29 +10,68 @@ const createSchema = z.object({
   endsAt: z.string().datetime().optional().nullable(),
   locationText: z.string().max(200).optional().nullable(),
   photoIds: z.array(z.string()).optional(),
+  kind: z.enum(["PERSONAL", "COLLECTIVE", "PUBLIC"]).optional(),
 });
+
+function mapEvent(event: {
+  id: string;
+  name: string;
+  startsAt: Date | null;
+  endsAt: Date | null;
+  locationText: string | null;
+  source: string;
+  kind: string;
+  visibility: string;
+  joinCode: string | null;
+  ownerId: string;
+  photos: { photo: { id: string; deletedAt: Date | null } }[];
+}) {
+  const live = event.photos.filter((link) => !link.photo.deletedAt);
+  return {
+    id: event.id,
+    name: event.name,
+    startsAt: event.startsAt,
+    endsAt: event.endsAt,
+    locationText: event.locationText,
+    source: event.source,
+    kind: event.kind,
+    visibility: event.visibility,
+    joinCode: event.joinCode,
+    mine: true,
+    photoCount: live.length,
+    coverPhotoId: live[0]?.photo.id ?? null,
+  };
+}
 
 export async function GET() {
   try {
     const user = await requireApiUser();
-    const events = await prisma.event.findMany({
+    const owned = await prisma.event.findMany({
       where: { ownerId: user.id, status: "CONFIRMED" },
       include: {
         photos: { include: { photo: { select: { id: true, deletedAt: true } } } },
       },
       orderBy: { createdAt: "desc" },
     });
+    const joined = await prisma.eventParticipant.findMany({
+      where: { userId: user.id, status: "JOINED" },
+      include: {
+        event: {
+          include: {
+            photos: { include: { photo: { select: { id: true, deletedAt: true } } } },
+          },
+        },
+      },
+    });
+    const joinedMapped = joined
+      .filter((row) => row.event.ownerId !== user.id)
+      .map((row) => ({
+        ...mapEvent(row.event),
+        mine: false,
+        joinCode: row.event.ownerId === user.id ? row.event.joinCode : null,
+      }));
     return jsonOk({
-      events: events.map((event) => ({
-        id: event.id,
-        name: event.name,
-        startsAt: event.startsAt,
-        endsAt: event.endsAt,
-        locationText: event.locationText,
-        source: event.source,
-        photoCount: event.photos.filter((link) => !link.photo.deletedAt).length,
-        coverPhotoId: event.photos.find((link) => !link.photo.deletedAt)?.photo.id ?? null,
-      })),
+      events: [...owned.map((event) => mapEvent(event)), ...joinedMapped],
     });
   } catch (error) {
     return handleRouteError(error);
@@ -51,6 +90,7 @@ export async function POST(request: Request) {
       locationText: body.locationText,
       photoIds: body.photoIds,
       source: "MANUAL",
+      kind: body.kind,
     });
     return jsonOk(event, 201);
   } catch (error) {

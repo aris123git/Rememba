@@ -1,13 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
 export async function enqueueJob(type: string, payload: unknown, userId?: string) {
-  if (type === "CLUSTER_USER" && userId) {
-    const existing = await prisma.job.findFirst({
-      where: { userId, type, status: { in: ["QUEUED", "RUNNING"] } },
-    });
-    if (existing) return existing;
-  }
-  if (type === "GENERATE_SUGGESTIONS" && userId) {
+  if ((type === "CLUSTER_USER" || type === "GENERATE_SUGGESTIONS" || type === "ENRICH_LIBRARY") && userId) {
     const existing = await prisma.job.findFirst({
       where: { userId, type, status: { in: ["QUEUED", "RUNNING"] } },
     });

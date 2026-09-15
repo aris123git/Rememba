@@ -1,3 +1,4 @@
+import { computeDHash, computeSharpness, qualityScore } from "@/server/ai/imageStats";
 import exifr from "exifr";
 import sharp from "sharp";
 import { prisma } from "@/lib/prisma";
@@ -41,6 +42,15 @@ export async function ingestPhoto(input: {
     // EXIF optionnel
   }
 
+  let sharpness = 0;
+  let phash: string | undefined;
+  try {
+    phash = await computeDHash(original);
+    sharpness = await computeSharpness(original);
+  } catch {
+    // stats optionnelles
+  }
+
   const photo = await prisma.photo.create({
     data: {
       ownerId: input.ownerId,
@@ -55,6 +65,13 @@ export async function ingestPhoto(input: {
       latitude: latitude ?? null,
       longitude: longitude ?? null,
       analysisStatus: "PENDING",
+      phash: phash ?? null,
+      sharpness,
+      qualityScore: qualityScore({
+        sharpness,
+        width: metadata.width,
+        height: metadata.height,
+      }),
     },
   });
 
@@ -68,6 +85,7 @@ export async function ingestPhoto(input: {
     data: { storageKey, thumbnailKey },
   });
   await enqueueJob("PROCESS_PHOTO", { photoId: photo.id }, input.ownerId);
+  await enqueueJob("ENRICH_LIBRARY", { userId: input.ownerId }, input.ownerId);
   return updated;
 }
 

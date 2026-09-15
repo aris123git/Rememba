@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { DeleteEventButton, EventPhotoManager } from "@/components/EventActions";
 import { EventAddPhotos } from "@/components/EventAddPhotos";
 import { formatDate } from "@/lib/format";
+import { EventCollectiveControls } from "@/components/EventCollectiveControls";
 import Link from "next/link";
 
 export default async function EventPage({ params }: { params: Promise<{ id: string }> }) {
@@ -28,10 +29,9 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
         {photos.length} photo{photos.length > 1 ? "s" : ""}
         {event.locationText ? ` · ${event.locationText}` : ""}
         {event.startsAt ? ` · ${formatDate(event.startsAt)}` : ""}
+        {` · ${event.kind} / ${event.visibility}`}
       </p>
-      <p className="mt-4 text-sm text-[var(--muted)]">
-        Vidéo automatique, musique, film collectif : TODO V5. Événement partagé : TODO V3.
-      </p>
+      <EventCollectiveControls eventId={event.id} joinCode={event.joinCode} visibility={event.visibility} />
       <div className="mt-6 flex gap-4">
         <Link href="/app/events/new" className="text-sm text-[var(--gold)]">
           Créer un autre événement

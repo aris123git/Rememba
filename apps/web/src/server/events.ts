@@ -8,6 +8,8 @@ export async function createEvent(input: {
   locationText?: string | null;
   photoIds?: string[];
   source?: "MANUAL" | "AI_SUGGESTION";
+  kind?: "PERSONAL" | "COLLECTIVE" | "PUBLIC";
+  placeId?: string | null;
 }) {
   const name = input.name.trim();
   if (!name) throw new Error("Le nom de l’événement est requis");
@@ -20,6 +22,8 @@ export async function createEvent(input: {
       locationText: input.locationText?.trim() || null,
       source: input.source ?? "MANUAL",
       status: "CONFIRMED",
+      kind: input.kind ?? "PERSONAL",
+      placeId: input.placeId ?? null,
     },
   });
   if (input.photoIds?.length) {
@@ -65,14 +69,23 @@ export async function acceptEventSuggestion(input: {
     photoIds: string[];
     startsAt?: string;
     endsAt?: string;
+    placeId?: string | null;
+    suggestedName?: string;
   };
+  let locationText: string | null = null;
+  if (payload.placeId) {
+    const place = await prisma.place.findFirst({ where: { id: payload.placeId, ownerId: input.ownerId } });
+    locationText = place?.name ?? null;
+  }
   const event = await createEvent({
     ownerId: input.ownerId,
-    name: input.name,
+    name: input.name || payload.suggestedName || "Souvenir",
     startsAt: payload.startsAt ? new Date(payload.startsAt) : null,
     endsAt: payload.endsAt ? new Date(payload.endsAt) : null,
+    locationText,
     photoIds: payload.photoIds,
     source: "AI_SUGGESTION",
+    placeId: payload.placeId ?? null,
   });
   await prisma.aIRecommendation.update({
     where: { id: rec.id },

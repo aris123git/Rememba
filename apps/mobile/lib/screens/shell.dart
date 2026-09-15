@@ -4,6 +4,7 @@ import 'package:rememba/api/rememba_api.dart';
 import 'package:rememba/screens/event_screens.dart';
 import 'package:rememba/screens/gallery_screens.dart';
 import 'package:rememba/screens/people_screens.dart';
+import 'package:rememba/screens/plus_screens.dart';
 import 'package:rememba/screens/settings_screen.dart';
 import 'package:rememba/screens/suggestions_screen.dart';
 import 'package:rememba/state/session.dart';
@@ -24,11 +25,11 @@ class _ShellScreenState extends State<ShellScreen> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-      HomeScreen(session: widget.session, onOpenSuggestions: () => setState(() => index = 4)),
+      HomeScreen(session: widget.session),
       GalleryScreen(session: widget.session),
       PeopleScreen(session: widget.session),
       EventsScreen(session: widget.session),
-      SuggestionsScreen(session: widget.session),
+      PlusHubScreen(session: widget.session),
     ];
     return Scaffold(
       appBar: AppBar(
@@ -51,7 +52,7 @@ class _ShellScreenState extends State<ShellScreen> {
           NavigationDestination(icon: Icon(Icons.photo_outlined), label: 'Galerie'),
           NavigationDestination(icon: Icon(Icons.people_outline), label: 'Personnes'),
           NavigationDestination(icon: Icon(Icons.event_outlined), label: 'Événements'),
-          NavigationDestination(icon: Icon(Icons.lightbulb_outline), label: 'IA'),
+          NavigationDestination(icon: Icon(Icons.apps_outlined), label: 'Plus'),
         ],
       ),
     );
@@ -59,9 +60,8 @@ class _ShellScreenState extends State<ShellScreen> {
 }
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, required this.session, required this.onOpenSuggestions});
+  const HomeScreen({super.key, required this.session});
   final SessionController session;
-  final VoidCallback onOpenSuggestions;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -85,6 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final people = await api.people();
       final suggestions = await api.suggestions();
       final jobs = await api.jobs();
+      final memory = await api.memory();
       setState(() {
         data = {
           'photos': photos['photos'] ?? [],
@@ -93,6 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
           'unknown': people['unknown'] ?? [],
           'suggestions': suggestions['suggestions'] ?? [],
           'jobs': jobs,
+          'memories': memory['memories'] ?? [],
         };
         error = null;
       });
@@ -148,13 +150,23 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Text('✨ Suggestions de l’IA', style: serifStyle(size: 22)),
               const Spacer(),
-              TextButton(onPressed: widget.onOpenSuggestions, child: const Text('Tout voir', style: TextStyle(color: remembaGold))),
+              TextButton(
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SuggestionsScreen(session: widget.session))),
+                child: const Text('Tout voir', style: TextStyle(color: remembaGold)),
+              ),
             ],
           ),
           if (suggestions.isEmpty)
             const Text('Aucune suggestion pour l’instant. Importez des photos — rien ne s’applique tout seul.', style: TextStyle(color: remembaMuted))
           else
             Text('${suggestions.length} proposition(s) en attente.', style: const TextStyle(color: remembaGold)),
+          const SizedBox(height: 24),
+          Text('Mémoire', style: serifStyle(size: 22)),
+          const SizedBox(height: 8),
+          if (((data!['memories'] as List?) ?? []).isEmpty)
+            const Text('Les souvenirs « un jour comme aujourd’hui » apparaîtront ici.', style: TextStyle(color: remembaMuted))
+          else
+            Text('${(data!['memories'] as List).length} carte(s) mémoire.', style: const TextStyle(color: remembaGold)),
           const SizedBox(height: 24),
           Text('Événements récents', style: serifStyle(size: 22)),
           const SizedBox(height: 8),

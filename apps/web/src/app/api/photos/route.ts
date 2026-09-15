@@ -11,8 +11,15 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const cursor = url.searchParams.get("cursor");
     const limit = Math.min(Number(url.searchParams.get("limit") || 40), 80);
+    const filter = url.searchParams.get("filter");
     const photos = await prisma.photo.findMany({
-      where: { ownerId: user.id, deletedAt: null },
+      where: {
+        ownerId: user.id,
+        deletedAt: null,
+        ...(filter === "duplicates" ? { duplicateOfId: { not: null } } : {}),
+        ...(filter === "best" ? { isBestInSeries: true } : {}),
+        ...(filter === "places" ? { placeId: { not: null } } : {}),
+      },
       orderBy: [{ importedAt: "desc" }, { id: "desc" }],
       take: limit + 1,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
@@ -26,6 +33,11 @@ export async function GET(request: Request) {
         height: true,
         latitude: true,
         longitude: true,
+        qualityScore: true,
+        isBestInSeries: true,
+        duplicateOfId: true,
+        placeId: true,
+        seriesId: true,
       },
     });
     const nextCursor = photos.length > limit ? photos.pop()?.id : null;

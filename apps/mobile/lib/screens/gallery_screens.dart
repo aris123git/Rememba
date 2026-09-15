@@ -54,6 +54,26 @@ class _GalleryScreenState extends State<GalleryScreen> {
         ),
         const SizedBox(height: 8),
         Text('${photos.length} photo(s) · miniatures uniquement', style: const TextStyle(color: remembaMuted)),
+        Wrap(
+          spacing: 8,
+          children: [
+            TextButton(onPressed: _load, child: const Text('Toutes')),
+            TextButton(
+              onPressed: () async {
+                final data = await widget.session.api.photosFiltered('best');
+                setState(() => photos = (data['photos'] as List).cast<Map<String, dynamic>>());
+              },
+              child: const Text('Meilleures'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final data = await widget.session.api.photosFiltered('duplicates');
+                setState(() => photos = (data['photos'] as List).cast<Map<String, dynamic>>());
+              },
+              child: const Text('Doublons'),
+            ),
+          ],
+        ),
         const SizedBox(height: 16),
         PhotoGrid(
           api: widget.session.api,
@@ -102,7 +122,20 @@ class _PhotoDetailScreenState extends State<PhotoDetailScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text('Analyse : ${p['analysisStatus']}', style: const TextStyle(color: remembaGold)),
+                if (p['qualityScore'] != null) Text('Qualité ${p['qualityScore']} · ${p['isBestInSeries'] == true ? 'meilleure de la série' : ''}'),
+                if (p['place'] is Map) Text('Lieu : ${(p['place'] as Map)['name']}'),
+                if (p['duplicateOfId'] != null) const Text('Marquée comme doublon possible', style: TextStyle(color: remembaMuted)),
                 Text('Importée le ${p['importedAt']}', style: const TextStyle(color: remembaMuted)),
+                const SizedBox(height: 12),
+                TextField(
+                  decoration: const InputDecoration(labelText: 'Partager avec (e-mail Rememba)'),
+                  onSubmitted: (email) async {
+                    await widget.session.api.createShare({'kind': 'PHOTO', 'photoId': widget.id, 'toEmail': email});
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Demande envoyée. Rien n’est copié tant qu’elle n’accepte pas.')));
+                    }
+                  },
+                ),
                 const SizedBox(height: 12),
                 Text('Visages', style: serifStyle(size: 22)),
                 if ((p['faces'] as List?)?.isEmpty ?? true)

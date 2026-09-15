@@ -2,7 +2,7 @@
   "name": "rememba",
   "private": true,
   "version": "1.0.0",
-  "description": "Rememba — assistant intelligent de souvenirs (V1 MVP)",
+  "description": "Rememba — assistant intelligent de souvenirs (V1–V7)",
   "scripts": {
     "dev": "concurrently -k -n web,worker,ai -c cyan,green,magenta \"npm run dev --prefix apps/web\" \"npm run worker --prefix apps/web\" \"npm run ai\"",
     "ai": "cd apps/ai-service && .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8090",

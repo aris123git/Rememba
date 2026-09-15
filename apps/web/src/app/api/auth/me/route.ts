@@ -5,8 +5,13 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return jsonError("Authentification requise", 401);
-  const consent = await prisma.consent.findUnique({
-    where: { userId_type: { userId: user.id, type: "AI_PHOTO_ANALYSIS" } },
+  const consents = await prisma.consent.findMany({ where: { userId: user.id } });
+  const map = Object.fromEntries(consents.map((item) => [item.type, item.granted]));
+  return jsonOk({
+    ...user,
+    aiPhotoAnalysis: Boolean(map.AI_PHOTO_ANALYSIS),
+    collectiveMatching: Boolean(map.COLLECTIVE_MATCHING),
+    publicDiscovery: Boolean(map.PUBLIC_DISCOVERY),
+    consents,
   });
-  return jsonOk({ ...user, aiPhotoAnalysis: Boolean(consent?.granted) });
 }

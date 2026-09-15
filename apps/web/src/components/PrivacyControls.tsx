@@ -4,23 +4,28 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { api } from "@/lib/clientApi";
 
-export function PrivacyControls({ aiGranted }: { aiGranted: boolean }) {
+export function PrivacyControls({
+  aiGranted,
+  collectiveGranted,
+  publicGranted,
+}: {
+  aiGranted: boolean;
+  collectiveGranted: boolean;
+  publicGranted: boolean;
+}) {
   const router = useRouter();
   const [granted, setGranted] = useState(aiGranted);
+  const [collective, setCollective] = useState(collectiveGranted);
+  const [pub, setPub] = useState(publicGranted);
   const [confirmation, setConfirmation] = useState("");
   const [message, setMessage] = useState<string | null>(null);
 
-  async function toggle(next: boolean) {
+  async function toggle(type: string, next: boolean) {
     await api("/api/consents", {
       method: "PUT",
-      body: JSON.stringify({ type: "AI_PHOTO_ANALYSIS", granted: next }),
+      body: JSON.stringify({ type, granted: next }),
     });
-    setGranted(next);
-    setMessage(
-      next
-        ? "Analyse réactivée pour les prochaines photos."
-        : "Analyse désactivée. Les embeddings existants ont été purgés.",
-    );
+    setMessage("Préférence enregistrée.");
     router.refresh();
   }
 
@@ -36,14 +41,39 @@ export function PrivacyControls({ aiGranted }: { aiGranted: boolean }) {
   return (
     <div className="mt-8 space-y-8">
       <section className="rounded-3xl border border-[var(--line)] bg-[var(--ink-soft)] p-5">
-        <h2 className="serif text-2xl">Analyse des visages</h2>
-        <p className="mt-2 text-sm text-[var(--muted)]">
-          Sans consentement, vos photos restent dans la galerie mais ne sont pas envoyées au moteur
-          IA.
-        </p>
+        <h2 className="serif text-2xl">Consentements</h2>
         <label className="mt-4 flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={granted} onChange={(e) => void toggle(e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={granted}
+            onChange={(e) => {
+              setGranted(e.target.checked);
+              void toggle("AI_PHOTO_ANALYSIS", e.target.checked);
+            }}
+          />
           Autoriser l’analyse IA des photos
+        </label>
+        <label className="mt-3 flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={collective}
+            onChange={(e) => {
+              setCollective(e.target.checked);
+              void toggle("COLLECTIVE_MATCHING", e.target.checked);
+            }}
+          />
+          Matching collectif (visages « c’est moi » uniquement, aucun partage auto)
+        </label>
+        <label className="mt-3 flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={pub}
+            onChange={(e) => {
+              setPub(e.target.checked);
+              void toggle("PUBLIC_DISCOVERY", e.target.checked);
+            }}
+          />
+          Découverte d’événements publics
         </label>
         {message ? <p className="mt-2 text-sm text-[var(--gold)]">{message}</p> : null}
       </section>

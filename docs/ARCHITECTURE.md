@@ -150,12 +150,12 @@ Détail web : `src/app` (UI PWA), `src/app/api` (HTTP), `src/server` (domaine), 
 
 | Version | Statut | Contenu |
 | --- | --- | --- |
-| **V1** | **Cette PR** | Auth, galerie, import, visages, embeddings, clusters, identités locales, événements manuels, suggestions temporelles simples, confidentialité |
-| V2 | Non commencé | Événements auto plus riches, lieux, séries, doublons, best photos, niveaux LOW/MEDIUM/HIGH exposés |
-| V3 | Non commencé | Événements collectifs, invitations, demandes de partage |
-| V4 | Non commencé | AI Orchestrator conversationnel + tools |
-| V5 | Non commencé | Générateur vidéo / musique |
-| V6 | Non commencé | Mémoire personnelle / timeline |
-| V7 | Non commencé | Événements publics organisateur |
+| **V1** | Livrée | Auth, galerie, import, visages, embeddings, clusters, identités locales, événements manuels, suggestions temporelles, confidentialité |
+| **V2** | Livrée | Lieux, séries, doublons, best shots, événements enrichis, LOW/MEDIUM/HIGH |
+| **V3** | Livrée | Collectif, invitations, demandes de partage, matching opt-in |
+| **V4** | Livrée | Agent à outils (recherche naturelle) |
+| **V5** | Livrée | Générateur vidéo + musique interne |
+| **V6** | Livrée | Mémoire / timeline |
+| **V7** | Livrée | Événements publics organisateur |
 
-**On ne passe pas à V2 tant que V1 n’est pas validée.**
+Détail : [docs/VERSIONS.md](VERSIONS.md).

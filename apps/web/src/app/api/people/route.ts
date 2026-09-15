@@ -60,10 +60,28 @@ export async function POST(request: Request) {
     const user = await requireApiUser();
     const body = (await request.json()) as {
       clusterId?: string;
+      personId?: string;
       displayName?: string;
+      email?: string;
+      phone?: string;
       isUserSelf?: boolean;
-      action?: "confirm" | "ignore" | "split";
+      action?: "confirm" | "ignore" | "split" | "contact";
     };
+    if (!body.clusterId && body.action === "contact") {
+      if (!body.personId || !body.displayName?.trim()) return jsonError("Contact incomplet");
+      const person = await prisma.person.findFirst({ where: { id: body.personId, ownerId: user.id } });
+      if (!person) return jsonError("Personne introuvable", 404);
+      const contact = await prisma.contactReference.create({
+        data: {
+          ownerId: user.id,
+          personId: person.id,
+          displayName: body.displayName.trim(),
+          email: body.email?.trim() || null,
+          phone: body.phone?.trim() || null,
+        },
+      });
+      return jsonOk(contact, 201);
+    }
     if (!body.clusterId) return jsonError("clusterId requis");
     const action = body.action || "confirm";
     if (action === "ignore") {

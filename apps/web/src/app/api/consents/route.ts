@@ -14,7 +14,7 @@ export async function GET() {
 }
 
 const schema = z.object({
-  type: z.enum(["AI_PHOTO_ANALYSIS"]),
+  type: z.enum(["AI_PHOTO_ANALYSIS", "COLLECTIVE_MATCHING", "PUBLIC_DISCOVERY"]),
   granted: z.boolean(),
 });
 
@@ -37,7 +37,7 @@ export async function PUT(request: Request) {
         revokedAt: body.granted ? null : new Date(),
       },
     });
-    if (!body.granted) {
+    if (!body.granted && body.type === "AI_PHOTO_ANALYSIS") {
       await prisma.faceEmbedding.deleteMany({ where: { ownerId: user.id } });
       await prisma.faceCluster.deleteMany({ where: { ownerId: user.id } });
       await prisma.photo.updateMany({

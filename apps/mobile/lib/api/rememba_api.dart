@@ -189,13 +189,95 @@ class RemembaApi {
     return _decode(response) as Map<String, dynamic>;
   }
 
-  Future<void> setConsent(bool granted) async {
+  Future<void> setConsent(bool granted, {String type = 'AI_PHOTO_ANALYSIS'}) async {
     final response = await http.put(
       _u('/api/consents'),
       headers: _headers,
-      body: jsonEncode({'type': 'AI_PHOTO_ANALYSIS', 'granted': granted}),
+      body: jsonEncode({'type': type, 'granted': granted}),
     );
     _decode(response);
+  }
+
+  Future<Map<String, dynamic>> memory() async {
+    final response = await http.get(_u('/api/memory'), headers: _headers);
+    return _decode(response) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> places() async {
+    final response = await http.get(_u('/api/places'), headers: _headers);
+    return _decode(response) as Map<String, dynamic>;
+  }
+
+  Future<void> renamePlace(String id, String name) async {
+    final response = await http.patch(_u('/api/places/$id'), headers: _headers, body: jsonEncode({'name': name}));
+    _decode(response);
+  }
+
+  Future<Map<String, dynamic>> askAgent(String text, {String? threadId}) async {
+    final response = await http.post(
+      _u('/api/agent'),
+      headers: _headers,
+      body: jsonEncode({'text': text, 'threadId': ?threadId}),
+    );
+    return _decode(response) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> shares() async {
+    final response = await http.get(_u('/api/shares'), headers: _headers);
+    return _decode(response) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> createShare(Map<String, dynamic> body) async {
+    final response = await http.post(_u('/api/shares'), headers: _headers, body: jsonEncode(body));
+    return _decode(response) as Map<String, dynamic>;
+  }
+
+  Future<void> respondShare(String id, bool accept) async {
+    final response = await http.post(_u('/api/shares/$id'), headers: _headers, body: jsonEncode({'accept': accept}));
+    _decode(response);
+  }
+
+  Future<Map<String, dynamic>> videos() async {
+    final response = await http.get(_u('/api/videos'), headers: _headers);
+    return _decode(response) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> createVideo(Map<String, dynamic> body) async {
+    final response = await http.post(_u('/api/videos'), headers: _headers, body: jsonEncode(body));
+    return _decode(response) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> publicEvents({String? code}) async {
+    final response = await http.get(_u('/api/public/events', code != null ? {'code': code} : null), headers: _headers);
+    return _decode(response) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> joinPublic(Map<String, dynamic> body) async {
+    final response = await http.post(_u('/api/public/events'), headers: _headers, body: jsonEncode(body));
+    return _decode(response) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> inviteEvent(String eventId, String email) async {
+    final response = await http.post(
+      _u('/api/events/$eventId/invites'),
+      headers: _headers,
+      body: jsonEncode({'email': email}),
+    );
+    return _decode(response) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> publishEvent(String eventId, String visibility) async {
+    final response = await http.post(
+      _u('/api/events/$eventId/publish'),
+      headers: _headers,
+      body: jsonEncode({'visibility': visibility}),
+    );
+    return _decode(response) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> photosFiltered(String filter) async {
+    final response = await http.get(_u('/api/photos', {'limit': '80', 'filter': filter}), headers: _headers);
+    return _decode(response) as Map<String, dynamic>;
   }
 
   Future<void> deleteAccount() async {

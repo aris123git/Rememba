@@ -1,6 +1,6 @@
 import path from "node:path";
 
-export const APP_VERSION = "V1";
+export const APP_VERSION = "V7";
 
 export function storageRoot(): string {
   return process.env.STORAGE_ROOT || path.resolve(process.cwd(), "../../data/storage");

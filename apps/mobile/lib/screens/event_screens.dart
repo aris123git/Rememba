@@ -41,7 +41,7 @@ class _EventsScreenState extends State<EventsScreen> {
             ),
           ],
         ),
-        const Text('Galerie collective : TODO V3.', style: TextStyle(color: remembaMuted)),
+        const Text('Galerie collective, invitations et visibilité : depuis la fiche événement.', style: TextStyle(color: remembaMuted)),
         const SizedBox(height: 16),
         if (events.isEmpty) const Text('Aucun événement confirmé.', style: TextStyle(color: remembaMuted)),
         ...events.map((event) => ListTile(
@@ -97,8 +97,49 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         children: [
           Text(event!['source'] == 'AI_SUGGESTION' ? 'Créé depuis une suggestion' : 'Créé manuellement', style: serifStyle(size: 14, color: remembaGold)),
           Text(event!['name'] as String, style: serifStyle(size: 32)),
+          Text('${event!['kind'] ?? 'PERSONAL'} · ${event!['visibility'] ?? 'PRIVATE'}', style: const TextStyle(color: remembaMuted)),
+          if (event!['joinCode'] != null) Text('Code : ${event!['joinCode']}', style: const TextStyle(color: remembaGold)),
           Text('${photos.length} photo(s)', style: const TextStyle(color: remembaMuted)),
-          const Text('Vidéo automatique : TODO V5. Événement partagé : TODO V3.', style: TextStyle(color: remembaMuted, fontSize: 13)),
+          const SizedBox(height: 12),
+          if (event!['mine'] != false) ...[
+            TextField(
+              decoration: const InputDecoration(labelText: 'Inviter par e-mail'),
+              onSubmitted: (email) async {
+                await widget.session.api.inviteEvent(widget.id, email);
+                await _load();
+              },
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: [
+                GoldButton(
+                  label: 'Rendre public',
+                  onPressed: () async {
+                    await widget.session.api.publishEvent(widget.id, 'PUBLIC');
+                    await _load();
+                  },
+                ),
+                TextButton(
+                  onPressed: () async {
+                    await widget.session.api.publishEvent(widget.id, 'PRIVATE');
+                    await _load();
+                  },
+                  child: const Text('Repasser privé'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            GoldButton(
+              label: 'Générer une vidéo',
+              onPressed: () async {
+                await widget.session.api.createVideo({'eventId': widget.id, 'style': 'recap', 'withMusic': true});
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Montage lancé sur le serveur.')));
+                }
+              },
+            ),
+          ],
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,

@@ -2,7 +2,7 @@
 
 Assistant intelligent de souvenirs.
 
-**V1** : client **Flutter Android** (iOS = le même code) + **backend API commun**. Le moteur IA n’est jamais dans l’APK. Desktop / web plus tard, **même compte, mêmes données**.
+**V1–V7** : client **Flutter Android** (iOS = le même code) + **backend API commun**. Le moteur IA n’est jamais dans l’APK. Desktop / web plus tard, **même compte, mêmes données**.
 
 ```
 Android / iOS / (plus tard Windows · macOS · Linux · Web)
@@ -17,6 +17,7 @@ Base + stockage
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - [docs/MULTIPLATFORM.md](docs/MULTIPLATFORM.md)
 - [docs/V1.md](docs/V1.md)
+- [docs/VERSIONS.md](docs/VERSIONS.md)
 
 ## Backend
 

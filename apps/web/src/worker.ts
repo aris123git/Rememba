@@ -1,6 +1,8 @@
 import "@/lib/loadEnv";
 import { completeJob, failJob, claimNextJob } from "@/server/jobs/queue";
+import { enrichLibraryJob } from "@/server/enrich";
 import { clusterUserJob, generateSuggestionsJob, processPhotoJob } from "@/server/orchestrator";
+import { renderVideoJob } from "@/server/video";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -17,6 +19,14 @@ async function handle(type: string, payload: Record<string, unknown>) {
     await generateSuggestionsJob(String(payload.userId));
     return;
   }
+  if (type === "ENRICH_LIBRARY") {
+    await enrichLibraryJob(String(payload.userId));
+    return;
+  }
+  if (type === "RENDER_VIDEO") {
+    await renderVideoJob(String(payload.videoId), Boolean(payload.withMusic));
+    return;
+  }
   throw new Error(`Type de job inconnu: ${type}`);
 }
 
@@ -30,10 +40,7 @@ async function loop() {
     }
     try {
       const payload = JSON.parse(job.payload || "{}") as Record<string, unknown>;
-      if (job.type === "CLUSTER_USER" && job.userId && !payload.userId) payload.userId = job.userId;
-      if (job.type === "GENERATE_SUGGESTIONS" && job.userId && !payload.userId) {
-        payload.userId = job.userId;
-      }
+      if (job.userId && !payload.userId) payload.userId = job.userId;
       await handle(job.type, payload);
       await completeJob(job.id);
     } catch (error) {

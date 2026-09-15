@@ -3,6 +3,7 @@ import { requireApiUser } from "@/lib/auth";
 import { handleRouteError, jsonError, jsonOk } from "@/lib/http";
 import { prisma } from "@/lib/prisma";
 import { attachPhotos, detachPhoto } from "@/server/events";
+import { canViewEvent } from "@/server/access";
 
 const patchSchema = z.object({
   name: z.string().min(1).max(120).optional(),
@@ -15,8 +16,10 @@ export async function GET(_: Request, context: { params: Promise<{ id: string }>
   try {
     const user = await requireApiUser();
     const { id } = await context.params;
+    const allowed = await canViewEvent(user.id, id);
+    if (!allowed) return jsonError("Événement introuvable", 404);
     const event = await prisma.event.findFirst({
-      where: { id, ownerId: user.id },
+      where: { id },
       include: {
         photos: {
           include: {
@@ -27,13 +30,27 @@ export async function GET(_: Request, context: { params: Promise<{ id: string }>
                 takenAt: true,
                 importedAt: true,
                 deletedAt: true,
+                ownerId: true,
               },
             },
           },
         },
+        participants: {
+          include: { user: { select: { id: true, displayName: true, email: true } } },
+        },
       },
     });
     if (!event) return jsonError("Événement introuvable", 404);
+    const mine = event.ownerId === user.id;
+    const live = event.photos.filter((link) => !link.photo.deletedAt);
+    let photos = live.map((link) => link.photo);
+    if (!mine) {
+      const perms = await prisma.permission.findMany({
+        where: { userId: user.id, resourceType: "PHOTO", action: "VIEW", granted: true },
+      });
+      const allowedIds = new Set(perms.map((item) => item.resourceId));
+      photos = photos.filter((photo) => allowedIds.has(photo.id));
+    }
     return jsonOk({
       id: event.id,
       name: event.name,
@@ -41,7 +58,20 @@ export async function GET(_: Request, context: { params: Promise<{ id: string }>
       endsAt: event.endsAt,
       locationText: event.locationText,
       source: event.source,
-      photos: event.photos.filter((link) => !link.photo.deletedAt).map((link) => link.photo),
+      kind: event.kind,
+      visibility: event.visibility,
+      joinCode: mine ? event.joinCode : null,
+      mine,
+      photos,
+      participants: mine
+        ? event.participants.map((item) => ({
+            id: item.id,
+            email: item.email,
+            status: item.status,
+            role: item.role,
+            user: item.user,
+          }))
+        : [],
     });
   } catch (error) {
     return handleRouteError(error);

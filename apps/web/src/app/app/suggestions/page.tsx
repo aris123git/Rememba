@@ -13,8 +13,7 @@ export default async function SuggestionsPage() {
     <div>
       <h1 className="serif text-4xl">✨ Suggestions de l’IA</h1>
       <p className="mt-2 max-w-2xl text-[var(--muted)]">
-        Proactive, jamais intrusive. Voir, puis décider. Partage automatique : jamais. Matching
-        collectif : TODO V3.
+        Matching collectif, événements publics, agent, vidéo : dans le menu.
       </p>
       <div className="mt-8 grid gap-4">
         {suggestions.length === 0 ? (
@@ -27,6 +26,7 @@ export default async function SuggestionsPage() {
                 id: item.id,
                 type: item.type,
                 payload: JSON.parse(item.payload) as Record<string, unknown>,
+                confidence: item.confidence,
               }}
             />
           ))

@@ -1,6 +1,6 @@
+import { canViewPhoto } from "@/server/access";
 import { requireApiUser } from "@/lib/auth";
 import { handleRouteError, jsonError } from "@/lib/http";
-import { prisma } from "@/lib/prisma";
 import { getStorage } from "@/lib/storage";
 
 export const runtime = "nodejs";
@@ -10,9 +10,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     const user = await requireApiUser();
     const { id } = await context.params;
     const variant = new URL(request.url).searchParams.get("variant") || "thumb";
-    const photo = await prisma.photo.findFirst({
-      where: { id, ownerId: user.id, deletedAt: null },
-    });
+    const photo = await canViewPhoto(user.id, id);
     if (!photo) return jsonError("Photo introuvable", 404);
     const key = variant === "original" ? photo.storageKey : photo.thumbnailKey;
     const bytes = await getStorage().get(key);
