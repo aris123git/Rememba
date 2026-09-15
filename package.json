@@ -1,0 +1,16 @@
+{
+  "name": "rememba",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Rememba — assistant intelligent de souvenirs (V1 MVP)",
+  "scripts": {
+    "dev": "concurrently -k -n web,worker,ai -c cyan,green,magenta \"npm run dev --prefix apps/web\" \"npm run worker --prefix apps/web\" \"npm run ai\"",
+    "ai": "cd apps/ai-service && .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8090",
+    "test": "npm test --prefix apps/web && cd apps/ai-service && .venv/bin/pytest -q",
+    "db:push": "npm run db:push --prefix apps/web",
+    "setup": "npm install --prefix apps/web && npm run db:push --prefix apps/web && apps/ai-service/.venv/bin/python -c \"from app.model_store import ensure_models; ensure_models()\" || (cd apps/ai-service && .venv/bin/python -c \"from app.model_store import ensure_models; ensure_models()\")"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

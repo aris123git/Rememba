@@ -1,0 +1,315 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// Compte applicatif. Isolation stricte : les données biométriques restent owner-scoped.
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  displayName  String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  consents         Consent[]
+  photos           Photo[]
+  people           Person[]
+  faceClusters     FaceCluster[]
+  faceEmbeddings   FaceEmbedding[]
+  events           Event[]
+  recommendations  AIRecommendation[]
+  jobs             Job[]
+  contactRefs      ContactReference[]
+  shareSuggestions PhotoShareSuggestion[]
+  shareRequestsOut ShareRequest[]         @relation("ShareFrom")
+  shareRequestsIn  ShareRequest[]         @relation("ShareTo")
+  videos           Video[]
+  generatedVideos  GeneratedVideo[]
+  permissions      Permission[]
+  music            Music[]
+}
+
+model Consent {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// AI_PHOTO_ANALYSIS | CONTACTS_ACCESS | DATASET_EVAL
+  type      String
+  granted   Boolean
+  grantedAt DateTime?
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([userId, type])
+}
+
+model Photo {
+  id               String    @id @default(cuid())
+  ownerId          String
+  owner            User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  originalFilename String
+  mimeType         String
+  byteSize         Int
+  width            Int?
+  height           Int?
+  storageKey       String
+  thumbnailKey     String
+  takenAt          DateTime?
+  importedAt       DateTime  @default(now())
+  latitude         Float?
+  longitude        Float?
+  /// PENDING | RUNNING | DONE | SKIPPED | FAILED
+  analysisStatus   String    @default("PENDING")
+  analysisError    String?
+  /// Réservé V2 (doublons)
+  phash            String?
+  deletedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  faces            FaceEmbedding[]
+  eventPhotos      EventPhoto[]
+  shareSuggestions PhotoShareSuggestion[]
+  shareRequests    ShareRequest[]
+
+  @@index([ownerId, importedAt])
+  @@index([ownerId, analysisStatus])
+}
+
+model FaceEmbedding {
+  id         String       @id @default(cuid())
+  ownerId    String
+  owner      User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  photoId    String
+  photo      Photo        @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  clusterId  String?
+  cluster    FaceCluster? @relation(fields: [clusterId], references: [id], onDelete: SetNull)
+  x          Float
+  y          Float
+  width      Float
+  height     Float
+  score      Float
+  embedding  Bytes
+  dimensions Int
+  modelId    String
+  createdAt  DateTime     @default(now())
+
+  @@index([ownerId, clusterId])
+  @@index([photoId])
+}
+
+model FaceCluster {
+  id             String    @id @default(cuid())
+  ownerId        String
+  owner          User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  personId       String?
+  person         Person?   @relation(fields: [personId], references: [id], onDelete: SetNull)
+  /// UNCONFIRMED | CONFIRMED | IGNORED | SPLIT
+  status         String    @default("UNCONFIRMED")
+  suggestedLabel String?
+  coverFaceId    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  faces FaceEmbedding[]
+
+  @@index([ownerId, status])
+}
+
+/// Identité locale à un utilisateur — pas un compte Rememba.
+model Person {
+  id                 String   @id @default(cuid())
+  ownerId            String
+  owner              User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  displayName        String
+  isUserSelf         Boolean  @default(false)
+  /// SUGGESTED | CONFIRMED — une Person V1 n'existe qu'après confirmation.
+  confirmationStatus String   @default("CONFIRMED")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  clusters          FaceCluster[]
+  contactRefs       ContactReference[]
+  eventParticipants EventParticipant[]
+  shareSuggestions  PhotoShareSuggestion[]
+}
+
+model Event {
+  id           String    @id @default(cuid())
+  ownerId      String
+  owner        User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name         String
+  startsAt     DateTime?
+  endsAt       DateTime?
+  locationText String?
+  /// MANUAL | AI_SUGGESTION
+  source       String    @default("MANUAL")
+  /// DRAFT | CONFIRMED | IGNORED
+  status       String    @default("CONFIRMED")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  photos            EventPhoto[]
+  participants      EventParticipant[]
+  generatedVideos   GeneratedVideo[]
+}
+
+model EventPhoto {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  photoId   String
+  photo     Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([eventId, photoId])
+}
+
+/// V3 — contributeurs / participants d'un événement collectif.
+model EventParticipant {
+  id       String  @id @default(cuid())
+  eventId  String
+  event    Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  personId String?
+  person   Person? @relation(fields: [personId], references: [id], onDelete: SetNull)
+  role     String  @default("GUEST")
+  /// LOCAL | INVITED | JOINED
+  status   String  @default("LOCAL")
+
+  @@index([eventId])
+}
+
+model AIRecommendation {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// PERSON_IDENTITY | EVENT_CANDIDATE
+  type         String
+  payload      String
+  /// LOW | MEDIUM | HIGH — stocké pour V2, non mis en avant en V1
+  confidence   String    @default("MEDIUM")
+  /// PENDING | ACCEPTED | DISMISSED | SNOOZED
+  status       String    @default("PENDING")
+  dedupeKey    String
+  snoozedUntil DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([userId, dedupeKey])
+  @@index([userId, status, type])
+}
+
+model Job {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String
+  /// QUEUED | RUNNING | SUCCEEDED | FAILED
+  status      String   @default("QUEUED")
+  payload     String
+  error       String?
+  attempts    Int      @default(0)
+  maxAttempts Int      @default(3)
+  runAfter    DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status, runAfter])
+  @@index([userId, type, status])
+}
+
+/// V2+ — lien optionnel Person ↔ contact carnet d'adresses.
+model ContactReference {
+  id          String   @id @default(cuid())
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  personId    String?
+  person      Person?  @relation(fields: [personId], references: [id], onDelete: SetNull)
+  displayName String
+  email       String?
+  phone       String?
+  createdAt   DateTime @default(now())
+}
+
+/// V3 — suggestion de partage, jamais automatique.
+model PhotoShareSuggestion {
+  id        String   @id @default(cuid())
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  photoId   String
+  photo     Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  personId  String?
+  person    Person?  @relation(fields: [personId], references: [id], onDelete: SetNull)
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+}
+
+/// V3 — demande de partage entre utilisateurs.
+model ShareRequest {
+  id         String   @id @default(cuid())
+  fromUserId String
+  fromUser   User     @relation("ShareFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUserId   String?
+  toUser     User?    @relation("ShareTo", fields: [toUserId], references: [id], onDelete: SetNull)
+  photoId    String
+  photo      Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  status     String   @default("PENDING")
+  createdAt  DateTime @default(now())
+}
+
+/// V5 — vidéo importée (pas générée).
+model Video {
+  id         String   @id @default(cuid())
+  ownerId    String
+  owner      User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  storageKey String
+  durationMs Int?
+  createdAt  DateTime @default(now())
+}
+
+/// V5 — piste musicale (droits à respecter).
+model Music {
+  id         String   @id @default(cuid())
+  ownerId    String?
+  owner      User?    @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  title      String
+  source     String
+  license    String
+  storageKey String?
+  createdAt  DateTime @default(now())
+}
+
+/// V5 — rendu souvenir. Aucun générateur en V1.
+model GeneratedVideo {
+  id          String   @id @default(cuid())
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  eventId     String?
+  event       Event?   @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  /// COLLECTIVE | PERSONAL
+  kind        String   @default("PERSONAL")
+  style       String?
+  durationSec Int?
+  status      String   @default("TODO")
+  createdAt   DateTime @default(now())
+}
+
+model Permission {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resourceType String
+  resourceId   String
+  action       String
+  granted      Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  @@index([userId, resourceType, resourceId])
+}

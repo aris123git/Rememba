@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+
+# App data
+data/
+*.db
+*.db-journal
+apps/web/prisma/dev.db
+apps/web/prisma/dev.db-journal
+
+# Secrets & local env
+.env
+.env.local
+*.pem
+
+# Builds
+.next/
+out/
+dist/
+coverage/
+
+# Models (downloaded at first run)
+apps/ai-service/models/*.onnx
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
