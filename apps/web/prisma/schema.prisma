@@ -1,0 +1,423 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// Compte applicatif. Isolation stricte : les données biométriques restent owner-scoped.
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  displayName  String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  consents                  Consent[]
+  photos                    Photo[]
+  people                    Person[]
+  faceClusters              FaceCluster[]
+  faceEmbeddings            FaceEmbedding[]
+  events                    Event[]
+  recommendations           AIRecommendation[]
+  jobs                      Job[]
+  contactRefs               ContactReference[]
+  shareSuggestions          PhotoShareSuggestion[]
+  shareSuggestionsIncoming  PhotoShareSuggestion[] @relation("ShareSuggestionTarget")
+  shareRequestsOut          ShareRequest[]         @relation("ShareFrom")
+  shareRequestsIn           ShareRequest[]         @relation("ShareTo")
+  videos                    Video[]
+  generatedVideos           GeneratedVideo[]
+  permissions               Permission[]
+  music                     Music[]
+  places                    Place[]
+  series                    PhotoSeries[]
+  agentThreads              AgentThread[]
+  memories                  Memory[]
+  eventParticipations       EventParticipant[]
+}
+
+model Consent {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// AI_PHOTO_ANALYSIS | COLLECTIVE_MATCHING | PUBLIC_DISCOVERY | DATASET_EVAL
+  type      String
+  granted   Boolean
+  grantedAt DateTime?
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([userId, type])
+}
+
+model Photo {
+  id               String    @id @default(cuid())
+  ownerId          String
+  owner            User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  originalFilename String
+  mimeType         String
+  byteSize         Int
+  width            Int?
+  height           Int?
+  storageKey       String
+  thumbnailKey     String
+  takenAt          DateTime?
+  importedAt       DateTime  @default(now())
+  latitude         Float?
+  longitude        Float?
+  /// PENDING | RUNNING | DONE | SKIPPED | FAILED
+  analysisStatus   String    @default("PENDING")
+  analysisError    String?
+  phash            String?
+  sharpness        Float?
+  qualityScore     Float?
+  isBestInSeries   Boolean   @default(false)
+  placeId          String?
+  place            Place?    @relation(fields: [placeId], references: [id], onDelete: SetNull)
+  seriesId         String?
+  series           PhotoSeries? @relation(fields: [seriesId], references: [id], onDelete: SetNull)
+  duplicateOfId    String?
+  duplicateOf      Photo?    @relation("PhotoDuplicates", fields: [duplicateOfId], references: [id], onDelete: SetNull)
+  duplicates       Photo[]   @relation("PhotoDuplicates")
+  deletedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  faces            FaceEmbedding[]
+  eventPhotos      EventPhoto[]
+  shareSuggestions PhotoShareSuggestion[]
+  shareRequests    ShareRequest[]
+
+  @@index([ownerId, importedAt])
+  @@index([ownerId, analysisStatus])
+  @@index([ownerId, phash])
+  @@index([placeId])
+  @@index([seriesId])
+}
+
+model Place {
+  id        String   @id @default(cuid())
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name      String
+  latitude  Float
+  longitude Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  photos    Photo[]
+  events    Event[]
+
+  @@index([ownerId])
+}
+
+model PhotoSeries {
+  id          String   @id @default(cuid())
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  capturedAt  DateTime
+  bestPhotoId String?
+  createdAt   DateTime @default(now())
+  photos      Photo[]
+
+  @@index([ownerId])
+}
+
+model FaceEmbedding {
+  id         String       @id @default(cuid())
+  ownerId    String
+  owner      User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  photoId    String
+  photo      Photo        @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  clusterId  String?
+  cluster    FaceCluster? @relation(fields: [clusterId], references: [id], onDelete: SetNull)
+  x          Float
+  y          Float
+  width      Float
+  height     Float
+  score      Float
+  embedding  Bytes
+  dimensions Int
+  modelId    String
+  createdAt  DateTime     @default(now())
+
+  @@index([ownerId, clusterId])
+  @@index([photoId])
+}
+
+model FaceCluster {
+  id             String    @id @default(cuid())
+  ownerId        String
+  owner          User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  personId       String?
+  person         Person?   @relation(fields: [personId], references: [id], onDelete: SetNull)
+  /// UNCONFIRMED | CONFIRMED | IGNORED | SPLIT
+  status         String    @default("UNCONFIRMED")
+  suggestedLabel String?
+  coverFaceId    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  faces FaceEmbedding[]
+
+  @@index([ownerId, status])
+}
+
+/// Identité locale à un utilisateur — pas un compte Rememba.
+model Person {
+  id                 String   @id @default(cuid())
+  ownerId            String
+  owner              User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  displayName        String
+  isUserSelf         Boolean  @default(false)
+  /// SUGGESTED | CONFIRMED — une Person n'existe qu'après confirmation.
+  confirmationStatus String   @default("CONFIRMED")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  clusters          FaceCluster[]
+  contactRefs       ContactReference[]
+  eventParticipants EventParticipant[]
+  shareSuggestions  PhotoShareSuggestion[]
+}
+
+model Event {
+  id           String    @id @default(cuid())
+  ownerId      String
+  owner        User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name         String
+  startsAt     DateTime?
+  endsAt       DateTime?
+  locationText String?
+  description  String?
+  /// MANUAL | AI_SUGGESTION
+  source       String    @default("MANUAL")
+  /// DRAFT | CONFIRMED | IGNORED
+  status       String    @default("CONFIRMED")
+  /// PERSONAL | COLLECTIVE | PUBLIC
+  kind         String    @default("PERSONAL")
+  /// PRIVATE | UNLISTED | PUBLIC
+  visibility   String    @default("PRIVATE")
+  joinCode     String?   @unique
+  placeId      String?
+  place        Place?    @relation(fields: [placeId], references: [id], onDelete: SetNull)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  photos          EventPhoto[]
+  participants    EventParticipant[]
+  generatedVideos GeneratedVideo[]
+  shareRequests   ShareRequest[]
+}
+
+model EventPhoto {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  photoId   String
+  photo     Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([eventId, photoId])
+}
+
+/// V3 — contributeurs / participants d'un événement collectif.
+model EventParticipant {
+  id        String  @id @default(cuid())
+  eventId   String
+  event     Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  personId  String?
+  person    Person? @relation(fields: [personId], references: [id], onDelete: SetNull)
+  userId    String?
+  user      User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  email     String?
+  invitedBy String?
+  role      String  @default("GUEST")
+  /// LOCAL | INVITED | JOINED | DECLINED
+  status    String  @default("LOCAL")
+
+  @@index([eventId])
+  @@index([userId, status])
+}
+
+model AIRecommendation {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// PERSON_IDENTITY | EVENT_CANDIDATE | SHARE_PHOTO | DUPLICATE_SET | BEST_SHOT | MEMORY_ON_THIS_DAY
+  type         String
+  payload      String
+  /// LOW | MEDIUM | HIGH
+  confidence   String    @default("MEDIUM")
+  /// PENDING | ACCEPTED | DISMISSED | SNOOZED
+  status       String    @default("PENDING")
+  dedupeKey    String
+  snoozedUntil DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([userId, dedupeKey])
+  @@index([userId, status, type])
+}
+
+model Job {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String
+  /// QUEUED | RUNNING | SUCCEEDED | FAILED
+  status      String   @default("QUEUED")
+  payload     String
+  error       String?
+  attempts    Int      @default(0)
+  maxAttempts Int      @default(3)
+  runAfter    DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status, runAfter])
+  @@index([userId, type, status])
+}
+
+model ContactReference {
+  id          String   @id @default(cuid())
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  personId    String?
+  person      Person?  @relation(fields: [personId], references: [id], onDelete: SetNull)
+  displayName String
+  email       String?
+  phone       String?
+  createdAt   DateTime @default(now())
+}
+
+/// V3 — suggestion de partage, jamais automatique.
+model PhotoShareSuggestion {
+  id              String   @id @default(cuid())
+  ownerId         String
+  owner           User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  photoId         String
+  photo           Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  personId        String?
+  person          Person?  @relation(fields: [personId], references: [id], onDelete: SetNull)
+  suggestedUserId String?
+  suggestedUser   User?    @relation("ShareSuggestionTarget", fields: [suggestedUserId], references: [id], onDelete: SetNull)
+  reason          String?
+  status          String   @default("PENDING")
+  createdAt       DateTime @default(now())
+}
+
+/// V3 — demande de partage entre utilisateurs.
+model ShareRequest {
+  id         String   @id @default(cuid())
+  fromUserId String
+  fromUser   User     @relation("ShareFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUserId   String?
+  toUser     User?    @relation("ShareTo", fields: [toUserId], references: [id], onDelete: SetNull)
+  photoId    String?
+  photo      Photo?   @relation(fields: [photoId], references: [id], onDelete: SetNull)
+  eventId    String?
+  event      Event?   @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  /// PHOTO | EVENT_INVITE
+  kind       String   @default("PHOTO")
+  message    String?
+  status     String   @default("PENDING")
+  createdAt  DateTime @default(now())
+}
+
+model Video {
+  id         String   @id @default(cuid())
+  ownerId    String
+  owner      User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  storageKey String
+  durationMs Int?
+  createdAt  DateTime @default(now())
+}
+
+model Music {
+  id         String   @id @default(cuid())
+  ownerId    String?
+  owner      User?    @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  title      String
+  source     String
+  license    String
+  storageKey String?
+  createdAt  DateTime @default(now())
+  videos     GeneratedVideo[]
+}
+
+model GeneratedVideo {
+  id          String   @id @default(cuid())
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  eventId     String?
+  event       Event?   @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  /// COLLECTIVE | PERSONAL
+  kind        String   @default("PERSONAL")
+  style       String?
+  durationSec Int?
+  /// QUEUED | RENDERING | READY | FAILED
+  status      String   @default("QUEUED")
+  storageKey  String?
+  error       String?
+  musicId     String?
+  music       Music?   @relation(fields: [musicId], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Permission {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resourceType String
+  resourceId   String
+  action       String
+  granted      Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  @@index([userId, resourceType, resourceId])
+}
+
+model AgentThread {
+  id        String         @id @default(cuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  messages  AgentMessage[]
+}
+
+model AgentMessage {
+  id        String      @id @default(cuid())
+  threadId  String
+  thread    AgentThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  /// USER | ASSISTANT
+  role      String
+  content   String
+  toolsJson String?
+  createdAt DateTime    @default(now())
+
+  @@index([threadId, createdAt])
+}
+
+model Memory {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// ON_THIS_DAY | MONTH_RECAP | PERSON_STORY
+  kind       String
+  title      String
+  payload    String
+  occurredOn DateTime?
+  dedupeKey  String
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, dedupeKey])
+  @@index([userId, kind])
+}
