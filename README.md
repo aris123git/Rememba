@@ -38,6 +38,14 @@ API : http://localhost:3000 (PWA de secours + JSON). IA : http://localhost:8090.
 
 ## Android
 
+Installateur (APK, clés debug, pour tester) :
+
+- [releases/rememba-android.apk](releases/rememba-android.apk)
+
+Téléphone physique : autoriser les sources inconnues, installer l’APK, lancer le backend, puis dans l’app URL `http://IP_LAN:3000`. Émulateur : `http://10.0.2.2:3000`.
+
+Pour recompiler :
+
 ```bash
 export ANDROID_HOME=/chemin/vers/android-sdk
 export PATH="$PATH:/chemin/vers/flutter/bin"
@@ -45,7 +53,3 @@ cd apps/mobile
 flutter pub get && flutter test
 flutter build apk --release
 ```
-
-APK : `apps/mobile/build/app/outputs/flutter-apk/app-release.apk`
-
-Téléphone physique : dans Réglages, `http://IP_LAN:3000`. Émulateur : `http://10.0.2.2:3000`.

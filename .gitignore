@@ -32,8 +32,9 @@ apps/mobile/build/
 **/*.iml
 **/local.properties
 
-# Signed/built packages (copied to artifacts, not the repo)
+# Builds Flutter/Android (sauf l’installateur publié)
 *.apk
+!releases/*.apk
 *.aab
 *.ipa
 
