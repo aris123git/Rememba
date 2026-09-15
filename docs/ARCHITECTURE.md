@@ -28,7 +28,7 @@ Le cœur différenciant (événements collectifs, agent conversationnel, génér
 | Biométrie = donnée sensible | Conformité, confiance | Consentement `AI_PHOTO_ANALYSIS` ; embeddings isolés par `ownerId` ; suppression compte = purge fichiers + vecteurs |
 | EXIF incomplet | Événements trop faibles | Fallback `importedAt` ; suggestions seulement si ≥ N photos ; jamais de création auto d’événement |
 | Sync offline vs cloud | Divergence, conflits | V1 : serveur source de vérité + interfaces `StorageProvider` / `SyncEngine` (stub documenté, pas de faux offline) |
-| Passage web → mobile natif | Double écriture | V1 = PWA mobile-first. Contrats API / domaine stables. Expo (V2+) consommera les mêmes API |
+| Ajout iOS / desktop | Double écriture | Flutter dès V1 (Android compilé) ; iOS/desktop = le même projet ; métier + IA uniquement côté backend |
 | Événements collectifs (V3) | Fuite de photos | Modèle `ShareRequest` + permissions dès le schéma ; aucun endpoint de partage en V1 |
 | Qualité perçue « boutons fictifs » | Rejet produit | Toute action UI V1 a une logique réelle. Le reste est marqué TODO / FUTURE VERSION |
 
