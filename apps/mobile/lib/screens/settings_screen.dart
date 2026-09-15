@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rememba/local/memory_library.dart';
 import 'package:rememba/screens/auth_screens.dart';
 import 'package:rememba/screens/shell.dart';
 import 'package:rememba/state/session.dart';
@@ -6,8 +7,9 @@ import 'package:rememba/theme.dart';
 import 'package:rememba/widgets/common.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key, required this.session});
+  const SettingsScreen({super.key, required this.session, this.library});
   final SessionController session;
+  final MemoryLibrary? library;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -17,11 +19,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool granted = false;
   final confirm = TextEditingController();
   final server = TextEditingController();
+  final firstName = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     server.text = widget.session.api.baseUrl;
+    firstName.text = widget.library?.displayName ?? '';
     granted = widget.session.user?['aiPhotoAnalysis'] == true;
     if (widget.session.isSignedIn) {
       widget.session.refreshMe().then((_) {
@@ -34,6 +38,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void dispose() {
     confirm.dispose();
     server.dispose();
+    firstName.dispose();
     super.dispose();
   }
 
@@ -49,8 +54,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Text('Pour commencer', style: serifStyle(size: 28)),
           const SizedBox(height: 8),
           const Text(
-            'Rememba est d’abord une galerie : vos photos restent sur le téléphone. Aucun compte n’est nécessaire.',
+            'Rememba comprend votre mémoire sur l’appareil. Aucun compte n’est nécessaire pour commencer.',
             style: TextStyle(color: remembaMuted),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: firstName,
+            decoration: const InputDecoration(labelText: 'Prénom (optionnel, pour l’accueil)'),
+            onSubmitted: (v) => widget.library?.setDisplayName(v),
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: () => widget.library?.setDisplayName(firstName.text),
+              child: const Text('Enregistrer le prénom'),
+            ),
           ),
           const SizedBox(height: 24),
           Text('Compte (plus tard)', style: serifStyle(size: 22)),

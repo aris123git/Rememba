@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-const remembaInk = Color(0xFF100E0C);
-const remembaInkSoft = Color(0xFF1B1714);
-const remembaPaper = Color(0xFFF4EEE4);
-const remembaMuted = Color(0xFFB7AA98);
-const remembaGold = Color(0xFFE0B15A);
+const remembaInk = Color(0xFF05050A);
+const remembaInkSoft = Color(0xFF101018);
+const remembaPaper = Color(0xFFF4F1EA);
+const remembaMuted = Color(0xFF9A96A8);
+const remembaAccent = Color(0xFF8B6CFF);
+const remembaCyan = Color(0xFF5EE7FF);
+const remembaGold = remembaAccent;
 const remembaDanger = Color(0xFFE07A6A);
+const remembaGlass = Color(0x14FFFFFF);
 
 ThemeData remembaTheme() {
   final base = ThemeData(
@@ -15,9 +18,9 @@ ThemeData remembaTheme() {
     scaffoldBackgroundColor: remembaInk,
     colorScheme: const ColorScheme.dark(
       surface: remembaInkSoft,
-      primary: remembaGold,
-      onPrimary: remembaInk,
-      secondary: remembaGold,
+      primary: remembaAccent,
+      onPrimary: Colors.white,
+      secondary: remembaCyan,
       error: remembaDanger,
     ),
   );
@@ -27,37 +30,42 @@ ThemeData remembaTheme() {
       displayColor: remembaPaper,
     ),
     appBarTheme: AppBarTheme(
-      backgroundColor: remembaInk,
+      backgroundColor: Colors.transparent,
       foregroundColor: remembaPaper,
       elevation: 0,
-      titleTextStyle: GoogleFonts.fraunces(
+      titleTextStyle: GoogleFonts.outfit(
         color: remembaPaper,
-        fontSize: 22,
+        fontSize: 18,
         fontWeight: FontWeight.w500,
+        letterSpacing: 0.2,
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: Colors.black.withValues(alpha: 0.25),
+      fillColor: Colors.white.withValues(alpha: 0.05),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: remembaPaper.withValues(alpha: 0.12)),
+        borderRadius: BorderRadius.circular(22),
+        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: remembaPaper.withValues(alpha: 0.12)),
+        borderRadius: BorderRadius.circular(22),
+        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: remembaGold),
+        borderRadius: BorderRadius.circular(22),
+        borderSide: const BorderSide(color: remembaAccent),
       ),
     ),
     navigationBarTheme: NavigationBarThemeData(
-      backgroundColor: remembaInkSoft,
-      indicatorColor: remembaGold.withValues(alpha: 0.25),
+      backgroundColor: const Color(0xE605050A),
+      indicatorColor: remembaAccent.withValues(alpha: 0.22),
       labelTextStyle: WidgetStatePropertyAll(
         GoogleFonts.outfit(fontSize: 11, color: remembaPaper),
       ),
+    ),
+    floatingActionButtonTheme: const FloatingActionButtonThemeData(
+      backgroundColor: remembaAccent,
+      foregroundColor: Colors.white,
     ),
   );
 }
@@ -67,6 +75,15 @@ TextStyle serifStyle({double size = 32, Color color = remembaPaper}) {
     fontSize: size,
     color: color,
     fontWeight: FontWeight.w500,
-    height: 1.1,
+    height: 1.12,
+  );
+}
+
+TextStyle kickerStyle() {
+  return GoogleFonts.outfit(
+    fontSize: 11,
+    letterSpacing: 2.4,
+    fontWeight: FontWeight.w600,
+    color: remembaCyan,
   );
 }

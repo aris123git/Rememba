@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:rememba/screens/local_gallery_screen.dart';
+import 'package:rememba/screens/memory_shell.dart';
 import 'package:rememba/state/session.dart';
 import 'package:rememba/theme.dart';
 
@@ -38,8 +38,8 @@ class _RemembaAppState extends State<RemembaApp> {
       debugShowCheckedModeBanner: false,
       theme: remembaTheme(),
       home: !session.ready
-          ? const Scaffold(body: Center(child: CircularProgressIndicator(color: remembaGold)))
-          : LocalGalleryHome(session: session),
+          ? const Scaffold(body: Center(child: CircularProgressIndicator(color: remembaAccent)))
+          : MemoryShell(session: session),
     );
   }
 }
